@@ -1,0 +1,115 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}
+\usepackage{fancyhdr}       % header
+\usepackage{graphicx}       % graphics
+\usepackage{bookmark}
+
+%\usepackage{caption}
+\usepackage{svg}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{flushend}
+\usepackage{mathtools}
+\usepackage[square,sort,comma,numbers]{natbib}
+\bibliographystyle{IEEEtranN}
+\usepackage{tabularray}
+\usepackage{tikz}
+\usepackage{subfig}
+\usepackage{listings}
+% \usepackage{todonotes}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{pdfpages}
+\usepackage{placeins}
+\usepackage{cellspace}
+\usepackage{todonotes}
+\usepackage{mdframed}
+\usepackage{makecell}
+\usepackage[most]{tcolorbox}
+
+\newtcolorbox{findingbox}[1][]{
+  colback=gray!10!white,
+  colframe=gray!50!black,
+  #1
+}
+
+
+\setlength\cellspacetoplimit{3.5pt}
+\setlength\cellspacebottomlimit{3.5pt}
+
+% \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+%     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+	\title {TBA}
+
+    \author{\IEEEauthorblockN{Vinayak Sharma\IEEEauthorrefmark{1}, Patrick Lam\IEEEauthorrefmark{2}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}University of Waterloo; \emph{vinayak.sharma@uwaterloo.ca}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{2}University of Waterloo; \emph{patrick.lam@uwaterloo.ca}}
+    }
+
+    \maketitle
+    \thispagestyle{plain}
+    \pagestyle{plain}
+
+    \begin{abstract}
+      TODO
+    \end{abstract}
+    
+    
+
+    \begin{IEEEkeywords}
+        TODO
+    \end{IEEEkeywords}
+
+
+    \section{Introduction} \label{sec:introduction}
+    \input{01-introduction}
+
+    \section{Motivating Example} \label{sec:motivating}
+    \input{02-motivating-example}
+
+    %\section{Background}\label{sec:background}
+    %\input{background}
+
+
+    \section{Data Collection}\label{sec:data-collection}
+    \input{03-data-collection}
+
+
+    \section{Methodology}\label{sec:methodology}
+    \input{04-methodology}
+
+
+    \section{Results}\label{sec:results}
+    \input{05-results}
+
+
+    % TODO: add discussion
+    % TODO: add threats to validity
+
+    %\section{Threats to Validity}\label{sec:threats}
+    %\input{threats}
+    
+    \section{Related Work}\label{sec:related-work}
+    \input{06-related-work}
+    
+
+    \section{Conclusion}\label{sec:conclusion-&-future-work}
+    \input{07-conclusion}
+    
+    \bibliography{references}
+
+\end{document}
