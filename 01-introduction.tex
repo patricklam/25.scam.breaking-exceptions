@@ -1,11 +1,12 @@
 % look for citations about library usage
 The use of libraries developed by others is ubiquitous in modern
 software development. Libraries enable developers to include
-functionality in their own software (clients) without having to
+functionality in their own client software without having to
 implement it themselves.  However, libraries developed by others are
-also updated by others, sometimes on unpredictable schedules.  When
-one is developing software that is exposed to the Internet, one has a
-responsibility to incorporate at least security updates for the
+also updated by others, on schedules that are not controlled by the client developers.
+
+When one is developing software that is exposed to the Internet, one
+has a responsibility to incorporate at least security updates for the
 libraries that one is using as a client, or else risk vulnerabilities
 being exposed in one's software. The obligation to update libraries is
 a form of technical debt that accrues automatically with the passage
@@ -20,7 +21,7 @@ inconvenient at best.
 
 Compilers and simple static checkers can verify the absence of
 syntactic breaking changes in libraries, e.g. changes to signatures of
-public methods or retractions of formerly-existing methods. The
+public methods, or retractions of formerly-existing methods. The
 situation is worse for semantic breaking changes: there do not exist
 techniques for reliably detecting such changes.
 
@@ -34,7 +35,18 @@ to reduce the number of false positives that we report to client developers,
 and show only changed APIs that may realistically throw new exceptions
 in updated versions. % something about making it easy to show test cases.
 
-Research Questions
+We explore the following research questions:
+
+\noindent
+{\bf RQ1.} How often do published changes to Java libraries include new added exceptions,
+and under what circumstances do such exceptions occur (e.g. major/minor/patch versions)?
+
+\noindent
+{\bf RQ2.} Do library clients, in practice, call methods with new added exceptions, and is it possible for the clients to trigger these exceptions? Is it possible to write client test cases that trigger the exceptions?
+
+\vspace*{1em}
+
+Corpus. Summary of methodology.
 
 The contributions of this work are as follows: \todo{clean this up}
 
