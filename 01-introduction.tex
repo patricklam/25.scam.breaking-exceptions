@@ -1,0 +1,52 @@
+% look for citations about library usage
+The use of libraries developed by others is ubiquitous in modern
+software development. Libraries enable developers to include
+functionality in their own software (clients) without having to
+implement it themselves.  However, libraries developed by others are
+also updated by others, sometimes on unpredictable schedules.  When
+one is developing software that is exposed to the Internet, one has a
+responsibility to incorporate at least security updates for the
+libraries that one is using as a client, or else risk vulnerabilities
+being exposed in one's software. The obligation to update libraries is
+a form of technical debt that accrues automatically with the passage
+of time.
+
+% should we cite our Onward 2020 paper here?
+However, client developers are reluctant to upgrade libraries: new
+versions of libraries may include breaking Application Programming
+Interface (API) changes, requiring developers to verify that their own
+code continues working with the new library versions. This is
+inconvenient at best.
+
+Compilers and simple static checkers can verify the absence of
+syntactic breaking changes in libraries, e.g. changes to signatures of
+public methods or retractions of formerly-existing methods. The
+situation is worse for semantic breaking changes: there do not exist
+techniques for reliably detecting such changes.
+
+% cite FlowDroid
+
+In this work, we contribute a way to detect one type of potentially breaking
+change in a library. Our work enables client developers to identify changes
+to the set of exceptions that may be thrown by a Java library, particularly
+by the APIs that are actually used by client code. We leverage taint analysis
+to reduce the number of false positives that we report to client developers,
+and show only changed APIs that may realistically throw new exceptions
+in updated versions. % something about making it easy to show test cases.
+
+Research Questions
+
+The contributions of this work are as follows: \todo{clean this up}
+
+\begin{itemize}[noitemsep]
+\item empirical study of library usage
+\item technique for detecting and implementation thereof
+  \item results from technique
+\end{itemize}
+
+%RQ1: Do libraries have breaking changes in the form of added exceptions?
+%RQ2: Do clients call the methods which have these breaking changes, and can we trigger the new exceptions?
+
+%true, [RQ1] I think even logically it would make sense to showcase that libraries do add new unchecked exceptions (UE). We can even do something about the version in which they are adding the UE (do they introduce the UE in major version or minor version or patch version). [RQ2] Then we can follow it up with how often do clients call such method which have a newly added UE and can we trigger those UE (the taint analysis part can be defended along with it). 
+
+% https://hasel.auckland.ac.nz/2023/11/12/understanding-breaking-changes-in-the-wild/
