@@ -48,7 +48,7 @@ where \texttt{host} is a private field initialized to the empty string.
 Thus, calling \texttt{createAsyncClient(true)} triggers an exception when executed with
 \texttt{httpcore} version 4.4.16 but not with 4.4.6.
 
-\todo[inline]{The key thing here is to write about how we detect the client that calls the code with the new exception!}
+To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, we begin by identifying all external methods invoked by the client. \texttt{UnCheckGuard} then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. In this case, based on the confirmed reachability of the new exception, we declare the library-client pair \texttt{HttpAsyncClientUtils} and \texttt{httpcore} to exhibit a behavioral breaking change.
 
 It is possible to write a test case that calls the client's \texttt{createAsyncClient()} method
 and triggers the exception after an upgrade:
