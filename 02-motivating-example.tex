@@ -1,0 +1,9 @@
+We continue with a motivating example drawn from the DUETS collection~\cite{DUETS}
+of client/library pairs. 
+This example exhibits a case
+where version 4.4.16 of the \texttt{httpcore} library adds a check for an
+error condition.  If the condition holds, the library method will
+explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils},
+calls the relevant part of the library, and thus may be affected by the new exception.
+
+Specifically, the \texttt{(String, int)} constructor for \texttt{org.apache.http.HttpHost} 

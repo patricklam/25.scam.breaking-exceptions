@@ -23,7 +23,9 @@ Compilers and simple static checkers can verify the absence of
 syntactic breaking changes in libraries, e.g. changes to signatures of
 public methods, or retractions of formerly-existing methods. The
 situation is worse for semantic breaking changes: there do not exist
-techniques for reliably detecting such changes.
+techniques for reliably detecting such changes. Of course, in its full
+generality, the problem is undecidable, though breaking change
+detection can be estimated using program analysis techniques.
 
 % cite FlowDroid
 
