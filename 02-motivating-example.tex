@@ -20,10 +20,12 @@ with that parameter (to check that it contains no blanks). It is therefore possi
 exception in a client by attempting to instantiate a new \texttt{HttpHost} object and passing it an empty
 \texttt{hostname}.
 
-Our tool analyzes the change in \texttt{httpcore} and reports that, in
+Our tool UnCheckGuard analyzes the change in \texttt{httpcore} and reports that, in
 version 4.4.16, all of the \texttt{HttpHost} constructors may now throw an
 \texttt{IllegalArgumentException} via the \texttt{containsNoBlanks()} method, which
 was not thrown in 4.4.6.
+
+To detect this change, \texttt{UnCheckGuard} is provided with the JAR files of both \texttt{httpcore-4.4.6} and \texttt{httpcore-4.4.16}, along with the entry method used by the client—here, \texttt{<Util.HttpClientUtil.HttpAsyncClient: org.apache.http.impl.nio.client. CloseableHttpAsyncClient createAsyncClient(boolean)>}. It uses SootUp\cite{Karakaya24:_sootup} to construct an RTA-based call graph starting from this method and identifies all transitively reachable calls. The tool then collects all unchecked exceptions thrown within this graph and applies taint analysis using FlowDroid\cite{Arzt14:_flowdroid} to check whether method parameters can reach the exception sites. In version 4.4.6, it finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each confirmed to be parameter-reachable and thus potentially triggerable by the client.
 
 \paragraph{Client.} A newly-added exception is only relevant to a client if the client may potentially
 trigger that exception. It turns out that our \texttt{HttpAsyncClientUtils} client has reachable code

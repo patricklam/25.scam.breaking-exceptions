@@ -6,3 +6,57 @@
   pages={545-549},
   keywords={Java;Software libraries;Ecosystems;Static analysis;Tools;Libraries;Data mining;Mining software repositories;software reuse;Java;Maven},
   doi={10.1109/MSR52588.2021.00071}}
+@InProceedings{Karakaya24:_sootup,
+author="Karakaya, Kadiray
+and Schott, Stefan
+and Klauke, Jonas
+and Bodden, Eric
+and Schmidt, Markus
+and Luo, Linghui
+and He, Dongjie",
+editor="Finkbeiner, Bernd
+and Kov{\'a}cs, Laura",
+title="SootUp: A Redesign of the Soot Static Analysis Framework",
+booktitle="Tools and Algorithms for the Construction and Analysis of Systems",
+year="2024",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="229--247",
+isbn="978-3-031-57246-3"
+}
+@inproceedings{Arzt14:_flowdroid,
+author = {Arzt, Steven and Rasthofer, Siegfried and Fritz, Christian and Bodden, Eric and Bartel, Alexandre and Klein, Jacques and Le Traon, Yves and Octeau, Damien and McDaniel, Patrick},
+title = {FlowDroid: precise context, flow, field, object-sensitive and lifecycle-aware taint analysis for Android apps},
+year = {2014},
+isbn = {9781450327848},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2594291.2594299},
+doi = {10.1145/2594291.2594299},
+abstract = {Today's smartphones are a ubiquitous source of private and confidential data. At the same time, smartphone users are plagued by carelessly programmed apps that leak important data by accident, and by malicious apps that exploit their given privileges to copy such data intentionally. While existing static taint-analysis approaches have the potential of detecting such data leaks ahead of time, all approaches for Android use a number of coarse-grain approximations that can yield high numbers of missed leaks and false alarms.In this work we thus present FlowDroid, a novel and highly precise static taint analysis for Android applications. A precise model of Android's lifecycle allows the analysis to properly handle callbacks invoked by the Android framework, while context, flow, field and object-sensitivity allows the analysis to reduce the number of false alarms. Novel on-demand algorithms help FlowDroid maintain high efficiency and precision at the same time.We also propose DroidBench, an open test suite for evaluating the effectiveness and accuracy of taint-analysis tools specifically for Android apps. As we show through a set of experiments using SecuriBench Micro, DroidBench, and a set of well-known Android test applications, FlowDroid finds a very high fraction of data leaks while keeping the rate of false positives low. On DroidBench, FlowDroid achieves 93\% recall and 86\% precision, greatly outperforming the commercial tools IBM AppScan Source and Fortify SCA. FlowDroid successfully finds leaks in a subset of 500 apps from Google Play and about 1,000 malware apps from the VirusShare project.},
+booktitle = {Proceedings of the 35th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {259–269},
+numpages = {11},
+location = {Edinburgh, United Kingdom},
+series = {PLDI '14}
+}
+
+@article{10.1145/2666356.2594299,
+author = {Arzt, Steven and Rasthofer, Siegfried and Fritz, Christian and Bodden, Eric and Bartel, Alexandre and Klein, Jacques and Le Traon, Yves and Octeau, Damien and McDaniel, Patrick},
+title = {FlowDroid: precise context, flow, field, object-sensitive and lifecycle-aware taint analysis for Android apps},
+year = {2014},
+issue_date = {June 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {49},
+number = {6},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/2666356.2594299},
+doi = {10.1145/2666356.2594299},
+abstract = {Today's smartphones are a ubiquitous source of private and confidential data. At the same time, smartphone users are plagued by carelessly programmed apps that leak important data by accident, and by malicious apps that exploit their given privileges to copy such data intentionally. While existing static taint-analysis approaches have the potential of detecting such data leaks ahead of time, all approaches for Android use a number of coarse-grain approximations that can yield high numbers of missed leaks and false alarms.In this work we thus present FlowDroid, a novel and highly precise static taint analysis for Android applications. A precise model of Android's lifecycle allows the analysis to properly handle callbacks invoked by the Android framework, while context, flow, field and object-sensitivity allows the analysis to reduce the number of false alarms. Novel on-demand algorithms help FlowDroid maintain high efficiency and precision at the same time.We also propose DroidBench, an open test suite for evaluating the effectiveness and accuracy of taint-analysis tools specifically for Android apps. As we show through a set of experiments using SecuriBench Micro, DroidBench, and a set of well-known Android test applications, FlowDroid finds a very high fraction of data leaks while keeping the rate of false positives low. On DroidBench, FlowDroid achieves 93\% recall and 86\% precision, greatly outperforming the commercial tools IBM AppScan Source and Fortify SCA. FlowDroid successfully finds leaks in a subset of 500 apps from Google Play and about 1,000 malware apps from the VirusShare project.},
+journal = {SIGPLAN Not.},
+month = jun,
+pages = {259–269},
+numpages = {11}
+}
+
