@@ -55,7 +55,7 @@
 %     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-	\title {TBA}
+	\title {Detecting Exception-Related Behavioural Breaking Changes with UnCheckGuard}
 
     \author{\IEEEauthorblockN{Vinayak Sharma\IEEEauthorrefmark{1}, Patrick Lam\IEEEauthorrefmark{2}}
     \IEEEauthorblockA{\IEEEauthorrefmark{1}University of Waterloo; \emph{vinayak.sharma1@uwaterloo.ca}}
@@ -67,7 +67,22 @@
     \pagestyle{plain}
 
     \begin{abstract}
-      TODO
+      The ubiquitous use of third-party libraries in software development has enabled developers to quickly add
+      new functionality to their client software. Unfortunately, library usage also carries a cost in
+      terms of software maintenance: library upgrades may include breaking changes, in which expectations
+      from the client about library behaviour are no longer met in new library versions. Behavioural breaking
+      changes can be particularly insidious, and in their full generality, could require sophisticated program
+      analysis techniques to (approximately) detect.
+
+      In this work, we present our UnCheckGuard tool, which detects a class of behavioural breaking changes---those
+      related to exceptions thrown by Java libraries. UnCheckGuard analyzes both sides of the library/client
+      duet. On the library side, UnCheckGuard creates a list of new exceptions that may be thrown by methods
+      in a library's public API, including by its transitive callees. On the client side, UnCheckGuard identifies
+      client methods that call library methods with new exceptions. To reduce false positives, UnCheckGuard
+      additionally filters out client methods that cannot trigger these new exceptions. It therefore can be
+      used by client developers as a tool to screen library updates for relevant incompatibilities.
+
+      We have evaluated UnCheckGuard on ... and found ...
     \end{abstract}
     
     
