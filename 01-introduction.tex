@@ -13,11 +13,14 @@ a form of technical debt that accrues automatically with the passage
 of time.
 
 % should we cite our Onward 2020 paper here?
-However, client developers are reluctant to upgrade libraries: new
+However, upgrading libraries is not painless: new
 versions of libraries may include breaking Application Programming
 Interface (API) changes, requiring developers to verify that their own
 code continues working with the new library versions. This is
-inconvenient at best.
+inconvenient at best and can require hours of software development at worst,
+often without the reward of useful new features in the client software---they
+just allow the client software to continue working, in a hopefully less-vulnerable
+state.
 
 Compilers and simple static checkers can verify the absence of
 syntactic breaking changes in libraries, e.g. changes to signatures of

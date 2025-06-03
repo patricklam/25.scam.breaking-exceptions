@@ -1,9 +1,72 @@
 We continue with a motivating example drawn from the DUETS collection~\cite{DUETS}
 of client/library pairs. 
-This example exhibits a case
-where version 4.4.16 of the \texttt{httpcore} library adds a check for an
+Our example exhibits a case
+where a revision of the \texttt{httpcore} library adds a check for an
 error condition.  If the condition holds, the library method will
 explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils},
 calls the relevant part of the library, and thus may be affected by the new exception.
 
-Specifically, the \texttt{(String, int)} constructor for \texttt{org.apache.http.HttpHost} 
+\paragraph{Library.} Specifically, all constructors for the \texttt{org.apache.http.HttpHost} class transitively call
+the static method \texttt{Args.containsNoBlanks()}. Between version 4.4.6 and version 4.4.16, the \texttt{httpcore}
+developers added the following lines of code to \texttt{containsNoBlanks()}:
+\begin{lstlisting}[language=Java]
+  if (argument.length() == 0) {
+    throw new IllegalArgumentException
+      (name + `` may not be empty'');
+  }
+\end{lstlisting}
+All \texttt{HttpHost} constructors take a \texttt{hostname} parameter and call \texttt{containsNoBlanks()}
+with that parameter (to check that it contains no blanks). It is therefore possible to trigger this newly-thrown
+exception in a client by attempting to instantiate a new \texttt{HttpHost} object and passing it an empty
+\texttt{hostname}.
+
+Our tool analyzes the change in \texttt{httpcore} and reports that, in
+version 4.4.16, all of the \texttt{HttpHost} constructors may now throw an
+\texttt{IllegalArgumentException} via the \texttt{containsNoBlanks()} method, which
+was not thrown in 4.4.6.
+
+\paragraph{Client.} A newly-added exception is only relevant to a client if the client may potentially
+trigger that exception. It turns out that our \texttt{HttpAsyncClientUtils} client has reachable code
+that creates an \texttt{HttpHost} with an empty \texttt{host}. The
+public \texttt{HttpAsyncClient.createAsyncClient()} method
+takes a \texttt{proxy} parameter and contains the following code:
+\begin{lstlisting}[language=Java,basicstyle=\scriptsize\ttfamily]
+ if (proxy) {
+  return HttpAsyncClients.custom()
+   .setConnectionManager(conMgr)
+   .setDefaultCredentialsProvider(credentialsProvider)
+   .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+   .setProxy(new HttpHost(host, port))
+   .setDefaultCookieStore(new BasicCookieStore())
+   .setDefaultRequestConfig(requestConfig).build();
+ } else {
+   // ...
+\end{lstlisting}
+where \texttt{host} is a private field initialized to the empty string.
+Thus, calling \texttt{createAsyncClient(true)} triggers an exception when executed with
+\texttt{httpcore} version 4.4.16 but not with 4.4.6.
+
+\todo[inline]{The key thing here is to write about how we detect the client that calls the code with the new exception!}
+
+It is possible to write a test case that calls the client's \texttt{createAsyncClient()} method
+and triggers the exception after an upgrade:
+\begin{lstlisting}[language=Java,basicstyle=\scriptsize\ttfamily]
+@Test
+void testCreateAsyncClientThrowsExceptionForEmptyProxyHost() {
+  HttpAsyncClient client = new HttpAsyncClient();
+
+  IllegalArgumentException exception =
+    assertThrows(IllegalArgumentException.class, () -> {
+        client.createAsyncClient(true);
+    });
+
+    assertTrue(exception.getMessage()
+    .contains("may not be empty"),
+      "Expected exception due to empty hostname "+
+      "after upgrading to httpcore-4.4.16");
+}
+\end{lstlisting}
+
+
+
+
