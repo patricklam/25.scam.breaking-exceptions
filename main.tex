@@ -82,13 +82,19 @@
       additionally filters out client methods that cannot trigger these new exceptions. It therefore can be
       used by client developers as a tool to screen library updates for relevant incompatibilities.
 
-      We have evaluated UnCheckGuard on ... and found ...
+      We have evaluated UnCheckGuard on 98 library-client pairs drawn from the DUETS collection and found 10
+      callsites to have a call to a library method which, when upgraded to the latest version, introduces
+      a behavioural breaking change in the client due to a newly added unchecked exception. These findings
+      highlight the practical value of UnCheckGuard in identifying exception-related incompatibilities
+      introduced by library upgrades.
+
+
     \end{abstract}
     
     
 
     \begin{IEEEkeywords}
-        TODO
+        client/library interactions, behavioural breaking changes, exceptions, static analysis
     \end{IEEEkeywords}
 
 
