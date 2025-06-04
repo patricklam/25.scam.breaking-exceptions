@@ -2,7 +2,7 @@ We describe a methodology for detecting and verifying newly added unchecked exce
 We begin by collecting both the client programs and the necessary information to perform our analysis. Specifically, we extract all external library methods invoked by the client. For each of these methods, we analyze their implementation in both the version of the library currently used by the client and the latest version. This allows us to compare their behavior across versions. If we find that a method now throws a newly added unchecked exception in the latest version, and that the exception is reachable from the client code, we manually write test cases to verify the presence of behavioral breaking changes in the client due to the newly introduced exception.
 \subsection{Analysis Setup}
 
-The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis.
+The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis\todo{needs a pipeline diagram}.
 
 \subsubsection{Client Selection}
 
