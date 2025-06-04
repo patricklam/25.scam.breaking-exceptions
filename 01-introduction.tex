@@ -1,34 +1,37 @@
 % look for citations about library usage
 The use of libraries developed by others is ubiquitous in modern
-software development. Libraries enable developers to include
+software development~\cite{huang22:_charac_java,wang20:_java}. Libraries enable developers to include
 functionality in their own client software without having to
 implement it themselves.  However, libraries developed by others are
 also updated by others, on schedules that are not controlled by the client developers.
 
 When one is developing software that is exposed to the Internet, one
-has a responsibility to incorporate at least security updates for the
-libraries that one is using as a client, or else risk vulnerabilities
-being exposed in one's software~\cite{haryono22:_autom_ident_librar_vulner_data}. The obligation to update libraries is
+has a responsibility to incorporate security updates for the
+libraries that one is using as a client~\cite{wu23:_under_threat_upstr_vulner_downs}, or else risk vulnerabilities
+being exposed in one's software~\cite{haryono22:_autom_ident_librar_vulner_data,zhan21:_atvhun,alfadel23:_empir_python}. The obligation to update libraries is
 a form of technical debt that accrues automatically with the passage
 of time.
 
 % should we cite our Onward 2020 paper here?
-However, upgrading libraries is not painless: new
+However, upgrading libraries is not painless~\cite{elizalde18:_towar_smoot_librar_migrat,derr17:_keep}: new
 versions of libraries may include breaking Application Programming
-Interface (API) changes, requiring developers to verify that their own
+Interface (API) changes~\cite{dietrich14:_broken}, requiring developers to verify that their own
 code continues working with the new library versions. This is
 inconvenient at best and can require hours of software development at worst,
 often without the reward of useful new features in the client software---they
 just allow the client software to continue working, in a hopefully less-vulnerable
 state.
 
-Compilers and simple static checkers can verify the absence of
-syntactic breaking changes in libraries, e.g. changes to signatures of
-public methods, or retractions of formerly-existing methods. The
-situation is worse for semantic breaking changes: there do not exist
-techniques for reliably detecting such changes. Of course, in its full
-generality, the problem is undecidable, though breaking change
-detection can be estimated using program analysis techniques.
+Compilers and simple static
+checkers~\cite{brito18:_apidif,foo18:_effic_static_check_librar_updat}
+can verify the absence of syntactic breaking changes in libraries,
+e.g. changes to signatures of public methods, retractions of
+formerly-existing methods, or even syntactic changes to library method
+implementations. The situation is worse for semantic breaking changes:
+there do not exist techniques for reliably detecting such changes. Of
+course, in its full generality, the problem is undecidable, though
+breaking change detection can be estimated using program analysis
+techniques.
 
 % cite FlowDroid
 
@@ -38,7 +41,7 @@ to the set of exceptions that may be thrown by a Java library, particularly
 by the APIs that are actually used by client code. We leverage taint analysis
 to reduce the number of false positives that we report to client developers,
 and show only changed APIs that may realistically throw new exceptions
-in updated versions. % something about making it easy to show test cases.
+in updated versions, minimizing the number of false positives~\cite{pashchenko20:_vuln4,pashchenko18:_vulner}. % something about making it easy to show test cases.
 
 We explore the following research questions:
 
