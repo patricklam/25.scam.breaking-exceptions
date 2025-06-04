@@ -1,5 +1,22 @@
 We describe a methodology for detecting and verifying newly added unchecked exceptions in a library when it is updated from an older version to a newer one. Our focus is on identifying the impact of such changes on client code. Specifically, we analyze client programs to detect usage of library methods that now throw previously non-existent unchecked exceptions. These exceptions may introduce behavioral breaking changes that are difficult to detect through traditional compiler checks, as compilers typically enforce handling only for checked exceptions.
 We begin by collecting both the client programs and the necessary information to perform our analysis. Specifically, we extract all external library methods invoked by the client. For each of these methods, we analyze their implementation in both the version of the library currently used by the client and the latest version. This allows us to compare their behavior across versions. If we find that a method now throws a newly added unchecked exception in the latest version, and that the exception is reachable from the client code, we manually write test cases to verify the presence of behavioral breaking changes in the client due to the newly introduced exception.
-\subsection{Client Collection}
+\subsection{Analysis Setup}
+
+The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis.
+
+\subsubsection{Client Selection}
+
+We began by collecting clients to evaluate our approach. For this, we used the DUETS dataset~\cite{durieux21:_duets}, which provides a curated set of Java-based client programs available on GitHub, each with at least five stars. The first step involved compiling each client's source code to generate the corresponding JAR files required for further analysis. Clients that failed to compile were discarded, as the lack of a compiled artifact prevents further inspection.
+
+All clients were compiled using Java 11. To ensure compatibility with our analysis tooling, we checked whether each project contained a \texttt{pom.xml} file, indicating that it is a Maven-based project. Since our workflow relies on Maven for dependency resolution and build automation, only clients that could be built using Maven were included in our dataset.
+
+\subsubsection{Knowledge Extraction for Analysis}
+
+Once the valid clients were selected, we used SootUp~\cite{Karakaya24:_sootup} to extract all external method calls made by each client. This was accomplished by traversing all methods in the client and identifying occurrences of \texttt{JInvokeStmt}, which represent method invocation statements. In parallel, we collected both the old and new versions of the libraries used by the client, obtaining the corresponding JAR files for each version. These libraries were also analyzed using SootUp to extract all available method signatures.
+
+By correlating the external method calls from the client with the methods defined in each library, we constructed an accurate mapping between client calls and the corresponding library methods. This mapping enabled us to track how the behavior of these methods evolved across versions.
+
+As a result of this process, we obtained the JAR files for both the old and new versions of each library, along with a filtered list of external methods that are candidates for further analysis. These methods form the basis for detecting newly introduced unchecked exceptions that may lead to behavioral breaking changes in the client.
+
 \subsection{Finding newly added Unchecked Exceptions}
 \subsection{Verification of Unchecked Exceptions}
