@@ -8,9 +8,9 @@ The analysis setup is divided into two main phases: client selection and knowled
 
 \subsubsection{Client Selection}
 
-We began by collecting clients to evaluate our approach. For this, we used the DUETS dataset~\cite{durieux21:_duets}, which provides a curated set of Java-based client/library pairs available on GitHub, each with at least five stars. The first step involved compiling each client's source code to generate the corresponding JAR files required for further analysis. \todo{move some of this to section 3} We discarded clients that failed to compile: the lack of a compiled artifact prevents further inspection.
+\paragraph{Client Selection.}
+As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
-We compiled all clients using Java 11. To ensure compatibility with our analysis tooling, we checked whether each project contained a \texttt{pom.xml} file, indicating that it is a Maven-based project. Since our workflow relies on Maven for dependency resolution and build automation, we only included clients that could be built using Maven.
 \todo{we compile against which version of the library? the client's specified version? go into more detail about that here}
 
 \subsubsection{Knowledge Extraction for Analysis}
