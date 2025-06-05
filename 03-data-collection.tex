@@ -24,3 +24,14 @@ This command updates the \texttt{pom.xml} file with the most recent versions of 
 
 By following this process, we obtain both the original and the upgraded versions of each library used by the client, enabling us to perform a comparative analysis of behavioral changes across versions.
 
+\subsection{Method and Exception Extraction}
+
+We analyze the JAR file of the client application using SootUp to extract all external method invocations performed by the client. Based on the recorded method calls, we analyze both the currently used version of the library and its latest available version.
+
+To support this comparison, we also extract the list of methods present in the current version of the library. This allows us to match each external method call made by the client to its corresponding definition in the library. Using this information, we generate a JSON file that contains only the subset of library methods actually used by the client. This filtered list enables more focused and efficient analysis in subsequent steps.
+
+\subsection{Comparing Library Versions}
+
+Our tool detects newly added unchecked exceptions using static analysis and verifies them using taint analysis. After collecting the unchecked exceptions from both the old and the latest versions of the library, we compare the sets of exceptions associated with each method. We remove any duplicate exceptions that appear in both versions. If a method in the latest version throws an exception that was not present in the older version, we tag that method as having a newly added unchecked exception.
+
+Using the previously generated mapping between client call sites and library methods, we create a JSON file that lists each client method along with the corresponding external method call that triggers a newly added unchecked exception. This output enables our tool to highlight call sites in the client application that may exhibit behavioral breaking changes, helping developers assess the impact of upgrading their dependencies.
