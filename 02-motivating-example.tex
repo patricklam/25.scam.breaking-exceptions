@@ -48,7 +48,7 @@ where \texttt{host} is a private field initialized to the empty string.
 Thus, calling \texttt{createAsyncClient(true)} triggers an exception when executed with
 \texttt{httpcore} version 4.4.16 but not with 4.4.6.
 
-To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all library methods invoked by the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code.\todo{say more about what reachability means}
+To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all library methods invoked by the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means that a call path exists from the client method to the exception-throwing site in the library, and that the client can trigger the exception using values it passes as parameters.\todo{TBR}
 
 In this case, based on the confirmed reachability of the new exception, we report that the library-client pair \texttt{HttpAsyncClientUtils} and \texttt{httpcore} exhibits a behaviuoral breaking change.
 
