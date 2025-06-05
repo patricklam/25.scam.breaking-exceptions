@@ -8,10 +8,9 @@ The analysis setup is divided into two main phases: client selection and knowled
 
 \subsubsection{Client Selection}
 
-\paragraph{Client Selection.}
-As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
+As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling. We initially compile each client using the library versions specified in its original configuration, since some clients fail to compile when their dependencies are upgraded. These failures are typically caused by method signature changes in the newer library versions, which the compiler detects and treats as errors. After generating the client JAR file using its originally defined dependencies, we then upgrade the libraries to their latest available versions in order to obtain the corresponding updated JAR files for those libraries for further analysis.
 
-\todo{we compile against which version of the library? the client's specified version? go into more detail about that here}
+\todo{TBR}
 
 \subsubsection{Knowledge Extraction for Analysis}
 
