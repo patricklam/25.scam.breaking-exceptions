@@ -1,10 +1,10 @@
-This section describes the systematic approach we used to construct the dataset for our study on behavioral incompatibilities caused by newly added unchecked exceptions in upgraded Java libraries. 
+This section describes the systematic approach we used to construct the dataset for our study on behavioural incompatibilities caused by newly added unchecked exceptions in upgraded Java libraries. 
 
 Broadly, we require three key components: Java-based clients that depend on third-party libraries, the current versions of the libraries used by these clients, and the latest available versions of those same libraries. For each client-library pair, we also need to extract the set of unchecked exceptions thrown by the library methods actually used by the client.
 
 To obtain this information, our methodology involves several key steps: identifying suitable Java clients, extracting their library dependencies, resolving both the current and latest versions of the libraries, analyzing exception behavior in both versions, and recording all methods that introduce newly added unchecked exceptions. 
 
-Each step is essential for enabling our tool, UnCheckGuard, to pinpoint client call sites that may be affected by behavioral breaking changes.
+Each step is essential for enabling our tool, UnCheckGuard, to pinpoint client call sites that may be affected by behavioural breaking changes.
 
 \subsection{Collecting Clients}
 
@@ -22,7 +22,7 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.18.0:use-latest-versions
 \end{lstlisting}
 This command updates the \texttt{pom.xml} file with the most recent versions of all declared dependencies. We then re-run \texttt{mvn dependency:copy-dependencies} to download the updated set of libraries.
 
-By following this process, we obtain both the original and the upgraded versions of each library used by the client, enabling us to perform a comparative analysis of behavioral changes across versions.
+By following this process, we obtain both the original and the upgraded versions of each library used by the client, enabling us to perform a comparative analysis of behavioural changes across versions.
 
 \subsection{Method and Exception Extraction}
 
@@ -34,4 +34,4 @@ To support this comparison, we also extract the list of methods present in the c
 
 Our tool detects newly added unchecked exceptions using static analysis and verifies them using taint analysis. After collecting the unchecked exceptions from both the old and the latest versions of the library, we compare the sets of exceptions associated with each method. We remove any duplicate exceptions that appear in both versions. If a method in the latest version throws an exception that was not present in the older version, we tag that method as having a newly added unchecked exception.
 
-Using the previously generated mapping between client call sites and library methods, we create a JSON file that lists each client method along with the corresponding external method call that triggers a newly added unchecked exception. This output enables our tool to highlight call sites in the client application that may exhibit behavioral breaking changes, helping developers assess the impact of upgrading their dependencies.
+Using the previously generated mapping between client call sites and library methods, we create a JSON file that lists each client method along with the corresponding external method call that triggers a newly added unchecked exception. This output enables our tool to highlight call sites in the client application that may exhibit behavioural breaking changes, helping developers assess the impact of upgrading their dependencies.
