@@ -109,3 +109,55 @@ After collecting the list of unchecked exceptions for each method in both the ol
 For methods that appear in both versions, we compare the sets of unchecked exceptions they throw. We perform this comparison using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains any additional unchecked exceptions, we classify it as a method with a newly added unchecked exception. Otherwise, we discard it from further consideration, as it does not introduce new behavioural breaking changes.
 
 \subsection{Verification of Unchecked Exceptions}
+
+Based on the information collected about newly added unchecked exceptions, we use the previously generated client-to-library method mapping to determine which client methods invoke a library method that now throws a new unchecked exception. This step allows us to identify specific client call sites that may be affected by behavioural breaking changes introduced in the upgraded library version.
+
+To validate the practical impact of these changes, we manually write test cases to assess whether the client can actually trigger the exception. Each test case is constructed starting from the client call site identified in the mapping. We then examine the method that was flagged as containing a newly added unchecked exception. This information is available in the JSON output produced by our tool, which includes the exception type and the method signature in which it occurs.
+
+The JSON output helps us locate the exact exception-throwing line in the library, which enables a detailed inspection of how the exception is triggered. We first test the exception by directly calling the relevant library method with crafted parameters. If this call triggers the exception, we proceed to construct a full test case that invokes the client method, propagating the same parameter values.
+
+However, in some scenarios, we are unable to trigger the exception through the client due to certain code structures:
+\begin{itemize}
+  \item The client may pass down a hardcoded constant value, which does not trigger the exception.
+  \item The client may apply explicit guards or checks before calling the affected library method.
+\end{itemize}
+
+Even in such cases, the information produced by our tool remains useful for the client developer, as future code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception.
+
+For example, in the client project \texttt{github.com/4ntoine/ServiceDiscovery-java}, we analyze the following code:
+
+\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily, breaklines=true]
+if (serviceInfo.getPayload() != null)
+    builder.setPayload(ByteString.copyFrom(serviceInfo.getPayload()));
+\end{lstlisting}
+
+In this case, the method with the newly added unchecked exception is:
+
+\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
+com.google.protobuf.ByteString.copyFrom(byte[])
+\end{lstlisting}
+
+The client uses version 2.6.1 of \texttt{protobuf-java}, while the latest version is 4.31.0. The newly added exception, \texttt{java.lang.NullPointerException}, is thrown in the upgraded library if a null value is passed. The relevant code from the library looks like this:
+
+\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
+LiteralByteString(byte[] bytes) {
+    if (bytes == null) {
+        throw new NullPointerException();
+    }
+    this.bytes = bytes;
+}
+\end{lstlisting}
+
+Although the upgraded version introduces a new unchecked exception, the client has already placed a guard condition:
+
+\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
+if (serviceInfo.getPayload() != null)
+\end{lstlisting}
+
+This prevents the exception from being triggered. Therefore, we do not generate a test case for this call site, but we still report it as potentially relevant.
+
+In contrast, for cases where the client does not enforce such conditions and passes input parameters that can trigger the new exception, we generate a test case to demonstrate the behavioural breaking change. In these situations, the change is not merely hypothetical—it represents an actual, runtime-breaking behaviour that occurs when the upgraded library is used. These tests offer actionable insights to developers by highlighting call sites that are immediately vulnerable to newly added exceptions.
+
+For cases where we cannot generate a test case due to hardcoded arguments or guarding conditions, the exception is not currently triggerable. However, the presence of a newly added exception remains valuable information for the client developer, as future changes (e.g., modifying the check or input value) could expose the call site to a runtime failure.
+
+
