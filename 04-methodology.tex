@@ -104,4 +104,8 @@ In this example, the parameter \texttt{input} is the taint source, and the excep
 
 This trade-off justifies the use of CHA in the verification phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
+After collecting the list of unchecked exceptions for each method in both the old and latest versions of the library, we perform a comparison to identify newly introduced exceptions. If a method exists in the old version but is missing from the latest version, we exclude it from our analysis, as its removal may indicate a method signature–based breaking change, which is outside the scope of our detection\todo{Maybe, we write something about JAPICMP?}.
+
+For methods that appear in both versions, we compare the sets of unchecked exceptions they throw. We perform this comparison using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains any additional unchecked exceptions, we classify it as a method with a newly added unchecked exception. Otherwise, we discard it from further consideration, as it does not introduce new behavioural breaking changes.
+
 \subsection{Verification of Unchecked Exceptions}
