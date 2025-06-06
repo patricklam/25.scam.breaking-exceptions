@@ -102,6 +102,6 @@ public static void applicableTo(PCollection<?> input) {
 
 In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA does not evaluate predicates such as \texttt{input.isBounded()} and therefore cannot determine that the exception is reachable from a client-controlled input. CHA, however, includes this conditional path in the call graph due to its broader approximation. As shown in Figure~\ref{fig:rta-vs-cha}, this distinction allows the taint analysis to capture cases that RTA would miss.
 
-This trade-off justifies our use of CHA in the verification phase: while it may report some false positives, it helps us avoid false negatives and ensures that client-triggerable exceptions are not missed.
+This trade-off justifies the use of CHA in the verification phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
 \subsection{Verification of Unchecked Exceptions}
