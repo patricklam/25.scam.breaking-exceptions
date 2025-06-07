@@ -6,13 +6,8 @@ We begin by collecting both the client programs and the necessary information to
 
 The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis\todo{needs a pipeline diagram}.
 
-\subsubsection{Client Selection}
 
-As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling. We initially compile each client using the library versions specified in its original configuration, since some clients fail to compile when their dependencies are upgraded. These failures are typically caused by method signature changes in the newer library versions, which the compiler detects and treats as errors. After generating the client JAR file using its originally defined dependencies, we then upgrade the libraries to their latest available versions in order to obtain the corresponding updated JAR files for those libraries for further analysis.
-
-\todo{this subsubsection is completely repeated from section 3, isn't it? I think it should all be in section 3 and none here}
-
-\subsubsection{Knowledge Extraction for Analysis}
+As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
 After selecting the valid clients and compiling them into JAR files, we proceed to extract relevant method-level knowledge from both the client and the current version of the libraries it depends on.% The process for acquiring the client and library JAR files is described in Section~\ref{sec:data-collection}.
 
@@ -30,7 +25,7 @@ Our primary goal is to detect whether upgrading a library introduces new uncheck
 
 To detect newly added unchecked exceptions in the upgraded library, we first construct a call graph using Rapid Type Analysis~\cite{bacon96:_fast_static_analy_c_virtual_funct_calls} (RTA) via SootUp~\cite{Karakaya24:_sootup}. We use RTA instead of Class Hierarchy Analysis (CHA) because RTA provides a more precise approximation of runtime behaviour in the context of a particular client/library pair. CHA, working on the class hierarchy, includes all methods defined in subclasses and interface implementations regardless of whether they are actually invoked. RTA instead considers only those types that are instantiated in the program (client plus libraries), resulting in a more accurate call graph.
 
-By definition, CHA reports the most conservative soundy~\cite{livshits15:_in} answer possible, absent reflection and other dynamic features. Thus, it tends to over-approximate and report unreachable method calls. For example, in one case, CHA identified a path from the method \texttt{<com.alibaba.fastjson.JSONObject: java.lang.String getString (java.lang.String)>}, reporting an exception thrown in the \texttt{JSONObject} constructor as reachable\todo{why does the path start from getString? or does the path start somewheree lse and hit getString and then the ctor?}. However, manual inspection revealed that this path was spurious—the method \texttt{getString} never reaches the constructor in question because, in the specific program under analysis, no code instantiates a \texttt{JSONObject}. RTA excludes such paths because it considers only types that are actually instantiated, whereas CHA includes all potential subtype relationships, regardless of runtime feasibility.
+By definition, CHA reports the most conservative soundy~\cite{livshits15:_in} answer possible, absent reflection and other dynamic features. Thus, it tends to over-approximate and report unreachable method calls. For example, in one case, CHA identified a path from the method \texttt{<com.alibaba.fastjson.JSONObject: java.lang.String getString (java.lang.String)>}, reporting an exception thrown in the \texttt{JSONObject} constructor as reachable\todo{why does the path start from getString? or does the path start somewheree lse and hit getString and then the ctor? - it starts from getString (case4 in interesting cases pdf)}. However, manual inspection revealed that this path was spurious—the method \texttt{getString} never reaches the constructor in question because, in the specific program under analysis, no code instantiates a \texttt{JSONObject}. RTA excludes such paths because it considers only types that are actually instantiated, whereas CHA includes all potential subtype relationships, regardless of runtime feasibility.
 % we should probably make this whole discussion more concise when we have space limitations
 
 After building the RTA-based call graph, we traverse the entire callgraph and collect all exceptions that are subclasses of \texttt{java.lang.RuntimeException} or \texttt{java.lang.Error}. Per the definition of the Java programming language, such exceptions represent the complete set of unchecked exceptions that the client might be newly exposed to due to the library upgrade.
@@ -39,7 +34,6 @@ After building the RTA-based call graph, we traverse the entire callgraph and co
 
 Once we collect the list of unchecked exceptions, we filter out those that cannot be triggered by the client. We use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework, for this purpose.
 
-\todo{We should include an example of a driver stub, probably in the motivating example.}
 To enable taint analysis, we automatically generate a \textit{driver stub} for each library method used by the client. The stub declares each method parameter as a taint source. For each parameter, we define a wrapper function and mark its return value as a FlowDroid source. Stub generation, implemented using SootUp, handles a variety of cases, including:
 \begin{itemize}
   \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
@@ -51,6 +45,21 @@ To enable taint analysis, we automatically generate a \textit{driver stub} for e
   \item Multiple parameters (sources named \texttt{SourceN()}, where $N$ is the parameter index)
   \item Overloaded methods (only one version retained)
 \end{itemize}
+
+\begin{lstlisting}[language=Java,breaklines=true,breakatwhitespace=false,basicstyle=\scriptsize\ttfamily]
+public class DriverStub {
+
+    public static java.lang.String source0() {
+        return null;
+    }
+
+    public static void run() {
+        int result = new com.alibaba.fastjson.JSONObject().getIntValue(source0());
+    }
+}
+\end{lstlisting}
+
+In the above example of the driver stub, we generate a stub for the method signature \texttt{<com.alibaba.fastjson.JSONObject: int getIntValue(java.lang.String)>}, which belongs to the library \texttt{fastjson-1.2.58}. It has a method parameter of type \texttt{java.lang.String}, which we declare as a method named \texttt{source0} in the driver stub. We declare the method \texttt{source0} to be a source, as FlowDroid marks its return value as a source. We dynamically generate the way \texttt{getIntValue} is called based on the type of method it is. We get the properties of the method using SootUp.
 
 We treat each exception discovered in the RTA phase as a \textit{taint sink}. For this analysis, we intentionally construct the call graph using Class Hierarchy Analysis (CHA). Although CHA is less precise than RTA, it offers conservative coverage, reducing the risk of missing true positive flows due to aggressive pruning.
 
@@ -90,22 +99,22 @@ public static void applicableTo(PCollection<?> input) {
 
 % Labels
 \node[align=left, font=\scriptsize] at ([xshift=1.9cm,yshift=0.1cm]cond.east) {\textbf{CHA:} includes both branches};
-\draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips due to\\ unresolved condition} (noexc.west);
+\draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips method due to\\ uninstantiated \texttt{PCollection}} (noexc.west);
 
 \end{tikzpicture}
 }
 \vspace{-1ex}
-\caption{CHA vs. RTA on a conditionally thrown exception. RTA excludes paths guarded by unresolved predicates, whereas CHA includes them.}
+\caption{CHA vs. RTA: RTA excludes methods like \texttt{applicableTo(...)} when their defining class (e.g., \texttt{PCollection}) is not instantiated in the analyzed program. CHA includes them regardless of runtime instantiation.}
 \label{fig:rta-vs-cha}
 \vspace{-2ex}
 \end{figure}
 
 
-In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA does not evaluate predicates such as \texttt{input.isBounded()} and therefore cannot determine that the exception is reachable from a client-controlled input. CHA, however, includes this conditional path in the call graph due to its broader approximation. As shown in Figure~\ref{fig:rta-vs-cha}, this distinction allows the taint analysis to capture cases that RTA would miss.\todo{I don't think this is correct. We should talk about it. RTA means that the call graph doesn't include any PCollections that aren't instantiated. Is that what's going on here?}
+In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.
 
 This trade-off justifies the use of CHA in the verification phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
-After collecting the list of unchecked exceptions for each method in both the old and latest versions of the library, we perform a comparison to identify newly introduced exceptions. If a method exists in the old version but is missing from the latest version, we exclude it from our analysis, as its removal may indicate a method signature–based breaking change, which is outside the scope of our detection\todo{Maybe, we write something about JAPICMP?}.
+After collecting the list of unchecked exceptions for each method in both the old and latest versions of the library, we perform a comparison to identify newly introduced exceptions. If a method exists in the old version but is missing from the latest version, we exclude it from our analysis, as its removal may indicate a method signature–based breaking change, which is outside the scope of our detection.
 
 For methods that appear in both versions, we compare the sets of unchecked exceptions they throw. We perform this comparison using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains any additional unchecked exceptions, we classify it as a method with a newly added unchecked exception. Otherwise, we discard it from further consideration; our technique cannot find new exception-related behavioural breaking changes for this library method.
 
@@ -160,7 +169,5 @@ if (serviceInfo.getPayload() != null)
 This prevents the exception from being triggered. Therefore, we do not generate a test case for this call site, but we still report it as potentially relevant.
 
 In contrast, for cases where the client does not enforce such conditions and passes input parameters that can trigger the new exception, we can generate a test case to demonstrate the behavioural breaking change. In these situations, the change is not merely hypothetical—it represents an actual, runtime-breaking behaviour that occurs when the upgraded library is used. These tests offer actionable insights to developers by highlighting call sites that are immediately vulnerable to newly added exceptions.
-
-For cases where we cannot generate a test case due to hardcoded arguments or guarding conditions, the exception is not currently triggerable. However, the presence of a newly added exception remains valuable information for the client developer, as future changes (e.g., modifying the check or input value) could expose the call site to a runtime failure.\todo{repeating ourselves}
 
 
