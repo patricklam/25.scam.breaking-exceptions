@@ -16,6 +16,25 @@
   keywords  = {Training;Software libraries;Costs;Databases;XML;Predictive models;Libraries;multi-label classification;machine learning;vulnerability report},
   doi       = {10.1145/3524610.3527893}
 }
+@article{CompCheck,
+author = {Zhu, Chenguang and Zhang, Mengshi and Wu, Xiuheng and Xu, Xiufeng and Li, Yi},
+title = {Client-Specific Upgrade Compatibility Checking via Knowledge-Guided Discovery},
+year = {2023},
+issue_date = {July 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {32},
+number = {4},
+issn = {1049-331X},
+url = {https://doi.org/10.1145/3582569},
+doi = {10.1145/3582569},
+abstract = {Modern software systems are complex, and they heavily rely on external libraries developed by different teams and organizations. Such systems suffer from higher instability due to incompatibility issues caused by library upgrades. In this article, we address the problem by investigating the impact of a library upgrade on the behaviors of its clients. We developed CompCheck, an automated upgrade compatibility checking framework that generates incompatibility-revealing tests based on previous examples. CompCheck first establishes an offline knowledge base of incompatibility issues by mining from open source projects and their upgrades. It then discovers incompatibilities for a specific client project, by searching for similar library usages in the knowledge base and generating tests to reveal the problems. We evaluated CompCheck on 202 call sites of 37 open source projects and the results show that CompCheck successfully revealed incompatibility issues on 76 call sites, 72.7\% and 94.9\% more than two existing techniques, confirming CompCheck’s applicability and effectiveness.},
+journal = {ACM Trans. Softw. Eng. Methodol.},
+month = may,
+articleno = {98},
+numpages = {31},
+keywords = {test generation, compatibility, Software upgrade}
+}
 
 @inproceedings{zhan21:_atvhun,
   author    = {Zhan, Xian and Fan, Lingling and Chen, Sen and Wu, Feng and Liu, Tianming and Luo, Xiapu and Liu, Yang},
@@ -485,6 +504,29 @@ series = {PLDI '14}
   year = 	 2014,
   pages = 	 {64--73}}
 
+@article{JEZEK2015129,
+title = {How Java APIs break – An empirical study},
+journal = {Information and Software Technology},
+volume = {65},
+pages = {129-146},
+year = {2015},
+issn = {0950-5849},
+doi = {https://doi.org/10.1016/j.infsof.2015.02.014},
+url = {https://www.sciencedirect.com/science/article/pii/S0950584915000506},
+author = {Kamil Jezek and Jens Dietrich and Premek Brada},
+keywords = {Binary compatibility, API evolution, Backward compatibility, Byte-code, Java},
+abstract = {Context
+It has become common practice to build programs by using libraries. While the benefits of reuse are well known, an often overlooked risk are system runtime failures due to API changes in libraries that evolve independently. Traditionally, the consistency between a program and the libraries it uses is checked at build time when the entire system is compiled and tested. However, the trend towards partially upgrading systems by redeploying only evolved library versions results in situations where these crucial verification steps are skipped. For Java programs, partial upgrades create additional interesting problems as the compiler and the virtual machine use different rule sets to enforce contracts between the providers and the consumers of APIs.
+Objective
+We have studied the extent of the problem in real world programs. We were interested in two aspects: the compatibility of API changes as libraries evolve, and the impact this has on programs using these libraries.
+Method
+This study is based on the qualitas corpus version 20120401. A data set consisting of 109 Java open-source programs and 564 program versions was used from this corpus. We have investigated two types of library dependencies: explicit dependencies to embedded libraries, and dependencies defined by symbolic references in Maven build files that are resolved at build time. We have used JaCC for API analysis, this tool is based on the popular ASM byte code analysis library.
+Results
+We found that for most of the programs we investigated, APIs are unstable as incompatible changes are common. Surprisingly, there are more compatibility problems in projects that use automated dependency resolution. However, we found only a few cases where this has an actual impact on other programs using such an API.
+Conclusion
+It is concluded that API instability is common and causes problems for programs using these APIs. Therefore, better tools and methods are needed to safeguard library evolution.}
+}
+  
 @InProceedings{foo18:_effic_static_check_librar_updat,
   author = 	 {Darius Foo and Hendy Chua and Jason Yeo and Ang Ming Yi and Asankhaya Sharma},
   title = 	 {Efficient Static Checking of Library Updates},
