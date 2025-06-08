@@ -54,15 +54,14 @@ and under what circumstances do such exceptions occur (e.g. major/minor/patch ve
 
 \vspace*{1em}
 
-Corpus. Summary of methodology.
-
-The contributions of this work are as follows: \todo{clean this up}
+The contributions of this work are as follows:
 
 \begin{itemize}[noitemsep]
-\item empirical study of library usage
-\item technique for detecting and implementation thereof
-  \item results from technique
+\item We conduct an empirical study of real-world client-library pairs to assess the prevalence of behavioural breaking changes caused by newly added unchecked exceptions.
+\item We introduce \textit{UnCheckGuard}, a static analysis tool that combines RTA-based call graph construction with taint analysis to detect and verify newly added unchecked exceptions.
+\item We evaluate 98 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 14 call sites where newly added unchecked exceptions could cause behavioural breaking changes.
 \end{itemize}
+
 
 %RQ1: Do libraries have breaking changes in the form of added exceptions?
 %RQ2: Do clients call the methods which have these breaking changes, and can we trigger the new exceptions?
