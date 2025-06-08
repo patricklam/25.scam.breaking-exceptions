@@ -38,6 +38,53 @@ Patch Version Change & 1 & 1 \\
 \end{tabular}
 \end{table}
 
+\subsection{Effectiveness of Taint Analysis}
+
+We apply Taint Analysis as a verification method in our tool. When we run our tool based only on an RTA-based call graph, which
+searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get around
+142 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
+
+We initially tried to write test cases for those 142 cases but were unable to write a test case that could trigger
+the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
+exceptions were not the ones passed by the client to the library method.
+
+For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{<com.google.protobuf.ByteString: com.google.protobuf.ByteString copyFromUtf8(java.lang.String)>}
+from the library \texttt{protobuf-java-2.6.1}, which when upgraded to \texttt{protobuf-java-4.30.1} introduces a new \texttt{IllegalArgumentException}. In this case, our tool
+does confirm that a new exception has been added and we do have a path from the entry method to the exception-causing callsite. However, the
+parameters used for resolving the condition to throw the exception are not the parameters supplied by the client, nor
+are those parameters tainted by the parameters provided by the client. Hence, it is not possible for the client-provided values
+to trigger this new exception. The method in \texttt{protobuf} that throws the unchecked exception contains the following code:
+
+\begin{lstlisting}[language=Java,breaklines=true,basicstyle=\scriptsize\ttfamily]
+static CodedInputStream newInstance(
+    final byte[] buf, final int off, final int len, final boolean bufferIsImmutable) {
+  ArrayDecoder result = new ArrayDecoder(buf, off, len, bufferIsImmutable);
+  try {
+    result.pushLimit(len);
+  } catch (InvalidProtocolBufferException ex) {
+    // The only reason pushLimit() might throw an exception here is if len
+    // is negative. Normally pushLimit()'s parameter comes directly off the
+    // wire, so it's important to catch exceptions in case of corrupt or
+    // malicious data. However, in this case, we expect that len is not a
+    // user-supplied value, so we can assume that it being negative indicates
+    // a programming error. Therefore, throwing an unchecked exception is
+    // appropriate.
+    throw new IllegalArgumentException(ex);
+  }
+  return result;
+}
+\end{lstlisting}
+
+In the comment written by the library developer, the developer confirms that this exception cannot be thrown because of
+user-supplied values.
+
+\vspace{1em}
+\begin{tcolorbox}[colback=gray!10, colframe=black]
+By adding taint analysis, we reduced the number of potentially affected callsites from 142 to just 14. For all 14, we were able to write test cases that successfully trigger the exception.
+\end{tcolorbox}
+\vspace{1em}
+
+
 \subsection{Impact on Clients}
 
 UnCheckGuard not only identifies newly added exceptions but also helps assess their practical consequences for clients. In total, across all client-library pairs, we observed 8047 external method invocations. Among these, 142 targeted methods that throw a new unchecked exception in the upgraded version. After applying reachability filtering, 14 of these callsites were confirmed to potentially have a behavioural breaking change. 

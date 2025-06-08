@@ -7,7 +7,7 @@ explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpA
 calls the relevant part of the library, and thus may be affected by the new exception.
 
 In the DUETS suite, our client, \texttt{HttpAsyncClientUtils}, declares a dependency on
-version 4.4.6 of the \texttt{httpcore} library\todo{that is true, right? - Yes}. Since the release of DUETS, the \texttt{httpcore} developers
+version 4.4.6 of the \texttt{httpcore} library. Since the release of DUETS, the \texttt{httpcore} developers
 have released a number of new versions, and at the time of writing, the latest version of \texttt{httpcore}
 is 4.4.16.
 
@@ -30,7 +30,7 @@ version 4.4.16, all of the \texttt{HttpHost} constructors may now throw an
 \texttt{IllegalArgumentException} via the \texttt{containsNoBlanks()} method.
 This exception was not thrown in 4.4.6.
 
-To detect this change, UnCheckGuard processes JAR files for both \texttt{httpcore-4.4.6} and \texttt{httpcore-4.4.16}. It uses SootUp~\cite{Karakaya24:_sootup} to construct an RTA-based call graph~\cite{bacon96:_fast_static_analy_c_virtual_funct_calls} starting from the entry method\todo{is there just one entry method, or several? - Just one for this client} and identifies all transitively reachable methods. UnCheckGuard then collects all unchecked exceptions thrown within this graph and applies taint analysis using FlowDroid~\cite{Arzt14:_flowdroid} to check whether method parameters controlled by the client can reach the exception sites. In version 4.4.6, it finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each of which the client can potentially trigger using the values it chooses to pass to the library as parameters.
+To detect this change, UnCheckGuard processes JAR files for both \texttt{httpcore-4.4.6} and \texttt{httpcore-4.4.16}. It uses SootUp~\cite{Karakaya24:_sootup} to construct an RTA-based call graph~\cite{bacon96:_fast_static_analy_c_virtual_funct_calls} starting from the \texttt{<org.apache.http.HttpHost: void <init>(java.lang.String,int)>} method and identifies all transitively reachable methods. UnCheckGuard then collects all unchecked exceptions thrown within this graph and applies taint analysis using FlowDroid~\cite{Arzt14:_flowdroid} to check whether method parameters controlled by the client can reach the exception sites. In version 4.4.6, it finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each of which the client can potentially trigger using the values it chooses to pass to the library as parameters.
 
 \paragraph{Client} 
 A newly-added exception is only relevant to a client if the client may
@@ -55,9 +55,9 @@ where \texttt{host} is a private field initialized to the empty string.
 Thus, calling \texttt{createAsyncClient(true)} triggers an exception when executed with
 \texttt{httpcore} version 4.4.16 but not with 4.4.6.
 
-To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all library methods invoked by the client\todo{starting at which entry points? - we make a sootup view and extract all InvokeStmt}. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means
+To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all external library methods invoked by the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means
 that the client can trigger the exception on some execution of the program, using values it passes as parameters,
-which implies that a path exists in the interprocedural control-flow graph, computed with Class Hierarchy Analysis (CHA), from the client method to the exception-throwing site in the library.\todo{there are two conditions here; the second one is weaker than the first one. Which do we check? Or is it a third thing, ie what FlowDroid computes?}
+which implies that a path exists in the interprocedural control-flow graph, computed with Class Hierarchy Analysis (CHA), from the client method to the exception-throwing site in the library.
 
 In this case, based on the confirmed reachability of the new exception, we report that the library-client pair \texttt{HttpAsyncClientUtils} and \texttt{httpcore} exhibits a behaviuoral breaking change.
 
