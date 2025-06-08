@@ -1,4 +1,4 @@
-We evaluated UnCheckGuard on Java-based clients from the DUETS dataset~\cite{durieux21:_duets}, selecting only those with at least 5 stars on GitHub to ensure practical relevance.
+We evaluated UnCheckGuard on Java-based clients from the DUETS dataset~\cite{durieux21:_duets}, selecting only clients with at least 5 stars on GitHub to ensure practical relevance.
 
 The goal of our tool is to detect whether a client calls a library method that, upon upgrading the library to a newer version, introduces a previously non-existent unchecked exception—potentially resulting in a behavioural breaking change.
 
@@ -11,15 +11,15 @@ We explore the following research questions:
 
 \subsection{Addition of Exceptions in Java Libraries}
 
-Our evaluation included 36 client applications, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
+Our evaluation included 36 client applications\todo{out of how many in DUETS?}, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
 
-UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, not all of these exceptions were actually reachable from client-controlled input. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
+UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, not all of these exceptions were actually reachable by calling methods in the client, even with a free choice of parameters to pass to the client code\todo{earlier on we should give an example of a reachable exception vs a non reachable exception}. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
 
 Notably, 6 out of these 8 libraries introduced such changes as part of a major version bump, which often signals breaking changes. However, we also observed one case each in a minor and a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Yes, Java libraries frequently introduce newly added unchecked exceptions across versions. Out of 98 client-library pairs, we identified 14 callsites affected by newly added unchecked exceptions across 8 libraries. These changes occurred not only in major version upgrades but also in minor and even patch versions (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ1:} Yes, Java libraries frequently introduce newly added unchecked exceptions across versions. Out of 98 client-library pairs, we identified 14 callsites affected by newly added unchecked exceptions across 8 libraries. These changes occurred in major version upgrades (6 times) but also in minor (1) and even patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
@@ -41,19 +41,19 @@ Patch Version Change & 1 & 1 \\
 \subsection{Effectiveness of Taint Analysis}
 
 We apply Taint Analysis as a verification method in our tool. When we run our tool based only on an RTA-based call graph, which
-searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get around
+searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get around \todo{why around? is this not an exact number?}
 142 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
 
 We initially tried to write test cases for those 142 cases but were unable to write a test case that could trigger
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
-For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the public \texttt{copyFromUtf8(String)}\footnote{Specifically, method \texttt{copyFromUtf8(String)} returning a \texttt{ByteString} on class \texttt{com.google.protobuf.ByteString}} method
+For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the public \texttt{copyFromUtf8(String)}\footnote{Fully-qualified: method \texttt{copyFromUtf8(String)} returning a \texttt{ByteString} on class \texttt{com.google.protobuf.ByteString}.} method
 from the library \texttt{protobuf-java-2.6.1}, which when upgraded to \texttt{protobuf-java-4.30.1} introduces a new \texttt{IllegalArgumentException}. In this case, our tool
-does confirm that a new exception has been added and we do have a path from the entry method to the exception-causing callsite. However, the
+does confirm that a new exception has been added and we do have a path from the entry method to the exception-causing callsite. However, as we show below, the
 parameters used for resolving the condition to throw the exception are not the parameters supplied by the client, nor
 are those parameters tainted by the parameters provided by the client. Hence, it is not possible for the client-provided values
-to trigger this new exception. The method in \texttt{protobuf} that throws the unchecked exception contains the following code:
+to trigger this new exception. The method in \texttt{protobuf} that throws the unchecked exception contains the following code:\todo{I think this is what I'm complaining about should occur earlier.}
 
 \begin{lstlisting}[language=Java,breaklines=true,basicstyle=\scriptsize\ttfamily]
 static CodedInputStream newInstance(
@@ -92,19 +92,20 @@ UnCheckGuard not only identifies newly added exceptions but also helps assess th
 To further evaluate the real-world impact of these changes, we attempted to construct test cases that could trigger the exception at runtime. In most of these cases, we successfully created such test inputs, confirming that the exception could propagate to the client. This validates that these changes are not merely theoretical but represent concrete runtime risks.
 
 In a few instances, our analysis identified callsites where the client code either passed a hardcoded value or included precondition checks (e.g., null checks) that prevented the exception from being triggered under current conditions. While these cases did not result in immediate runtime failures, they remain important for developers to monitor. Future code changes—for instance, removing a check or altering the passed argument—could unknowingly expose these callsites to the newly added exception, leading to a breaking change.
+\todo{we should make data available including the cases}
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 14 such callsites across our corpus. For most of these, we were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
+\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 14 such callsites across our corpus. For most\todo{How many?} of these, we were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
 \end{tcolorbox}
 \vspace{1em}
 
 \subsection{Developer-Facing Implications}
 
-Behavioural breaking changes caused by unchecked exceptions during API evolution are particularly dangerous. They don’t show up at compile time, and they don’t affect method signatures, which means most existing tools simply miss them. For instance, JAPICMP\footnote{https://github.com/siom79/japicmp}, a widely used tool for detecting breaking changes, focuses only on syntactic differences in method signatures. While it can flag checked exceptions—since they appear in method declarations—it has no way of identifying newly added unchecked exceptions. As a result, developers who rely solely on JAPICMP might remain unaware of serious runtime-breaking issues.
+Behavioural breaking changes caused by unchecked exceptions during API evolution are particularly dangerous. Such changes do not show up at compile time, and they do not affect method signatures, which means that the existing tools that we are aware of simply miss them. For instance, japicmp\footnote{https://github.com/siom79/japicmp}, a widely used tool for detecting breaking changes, focuses only on syntactic differences in method signatures. While it can flag checked exceptions—since they appear in method declarations—it has no way of identifying newly added unchecked exceptions. As a result, developers who rely solely on japicmp might remain unaware of serious runtime-breaking issues.
 
-Some tools have tried to tackle the challenge of behavioural breaking changes. CompCheck~\cite{CompCheck}, for example, works by identifying test cases in some clients and reusing them for others with similar API usage. But this approach depends heavily on the presence of thorough test suites. In practice, most clients don’t have such comprehensive coverage, especially not for edge cases involving unchecked exceptions.
+Some tools have tried to tackle the challenge of behavioural breaking changes. CompCheck~\cite{CompCheck}, for example, works by identifying test cases in some clients and reusing them for others with similar API usage. But this approach depends heavily on the presence of thorough test suites. In practice, most clients do not have such comprehensive coverage, especially not for edge cases involving unchecked exceptions.
 
-This is where UnCheckGuard steps in. It doesn’t rely on existing test cases. Instead, it compares the old and new versions of a library using static analysis to detect newly added unchecked exceptions, and then runs taint analysis to verify which ones might actually affect the client. By avoiding the need for a test suite, it can reveal behavioural breaking changes that other tools completely overlook.
+This is where UnCheckGuard steps in. Unlike existing work, it does not rely on existing test cases. Instead, it compares the old and new versions of a library using static analysis to detect newly added unchecked exceptions, and then runs taint analysis to verify which ones might actually affect the client. By avoiding the need for a test suite, it can reveal behavioural breaking changes that other tools completely overlook.
 
-In doing so, UnCheckGuard fills an important gap. It gives developers visibility into a class of breaking changes that are easy to miss but costly in practice—helping them catch potential failures early, before they reach production.
+In doing so, UnCheckGuard addresses an important gap. It gives developers visibility into a class of breaking changes that are easy to miss but costly in practice—helping them catch potential failures early, before they reach production.
