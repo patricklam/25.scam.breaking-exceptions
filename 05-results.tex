@@ -11,7 +11,7 @@ We explore the following research questions:
 
 \subsection{Addition of Exceptions in Java Libraries}
 
-Our evaluation included 36 client applications\todo{out of how many in DUETS?}, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
+Our evaluation included 36 client applications, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
 
 UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, not all of these exceptions were actually reachable by calling methods in the client, even with a free choice of parameters to pass to the client code\todo{earlier on we should give an example of a reachable exception vs a non reachable exception}. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
 
@@ -96,7 +96,7 @@ In a few instances, our analysis identified callsites where the client code eith
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 14 such callsites across our corpus. For most\todo{How many?} of these, we were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
+\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 14 such callsites across our corpus. We were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
 \end{tcolorbox}
 \vspace{1em}
 
