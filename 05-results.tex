@@ -48,7 +48,7 @@ We initially tried to write test cases for those 142 cases but were unable to wr
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
-For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{<com.google.protobuf.ByteString: com.google.protobuf.ByteString copyFromUtf8(java.lang.String)>}
+For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the public \texttt{copyFromUtf8(String)}\footnote{Specifically, method \texttt{copyFromUtf8(String)} returning a \texttt{ByteString} on class \texttt{com.google.protobuf.ByteString}} method
 from the library \texttt{protobuf-java-2.6.1}, which when upgraded to \texttt{protobuf-java-4.30.1} introduces a new \texttt{IllegalArgumentException}. In this case, our tool
 does confirm that a new exception has been added and we do have a path from the entry method to the exception-causing callsite. However, the
 parameters used for resolving the condition to throw the exception are not the parameters supplied by the client, nor
