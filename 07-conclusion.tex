@@ -1,1 +1,7 @@
-In this work, we demonstrated the working of our tool UnCheckGuard
+In this work, we demonstrated the impact of behavioural breaking changes caused by newly added unchecked exceptions in client applications. These changes are particularly difficult to detect, as they evade compile-time checks and are not reflected in API signatures.
+
+We introduced UnCheckGuard, a static analysis tool designed to detect such exceptions and help client developers avoid behavioural breaking changes. By combining RTA-based call graph construction with taint analysis, UnCheckGuard filters out unreachable exceptions, focusing only on those that are actually triggerable by client inputs.
+
+In our evaluation of 98 library–client pairs from the DUETS dataset, we identified 14 callsites affected by newly introduced unchecked exceptions. Notably, these issues arose not only in major library updates but also in minor and patch version upgrades—highlighting the risk that developers may unknowingly introduce runtime failures even during seemingly safe updates.
+
+UnCheckGuard addresses a critical gap in existing tools by targeting behavioural breaking changes due to unchecked exceptions. By statically analyzing both the library and client, it provides an effective way to catch runtime issues early and improve software robustness.

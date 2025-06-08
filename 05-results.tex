@@ -41,7 +41,7 @@ Patch Version Change & 1 & 1 \\
 \subsection{Effectiveness of Taint Analysis}
 
 We apply Taint Analysis as a verification method in our tool. When we run our tool based only on an RTA-based call graph, which
-searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get around \todo{why around? is this not an exact number?}
+searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get
 142 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
 
 We initially tried to write test cases for those 142 cases but were unable to write a test case that could trigger

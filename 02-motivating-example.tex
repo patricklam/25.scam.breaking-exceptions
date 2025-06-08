@@ -3,7 +3,7 @@ of client/library pairs.
 Our example exhibits a case
 where a revision of the \texttt{httpcore} library adds a check for an
 error condition.  If the condition holds, the library method will
-explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils},
+explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{github.com/a63881763/HttpAsyncClientUtils}},
 calls the relevant part of the library, and thus may be affected by the new exception.
 
 In the DUETS suite, our client, \texttt{HttpAsyncClientUtils}, declares a dependency on
@@ -30,14 +30,14 @@ version 4.4.16, all of the \texttt{HttpHost} constructors may now throw an
 \texttt{IllegalArgumentException} via the \texttt{containsNoBlanks()} method.
 This exception was not thrown in 4.4.6.
 
-To detect this change, UnCheckGuard processes JAR files for both \texttt{httpcore-4.4.6} and \texttt{httpcore-4.4.16}. It uses SootUp~\cite{Karakaya24:_sootup} to construct an RTA-based call graph~\cite{bacon96:_fast_static_analy_c_virtual_funct_calls} starting from the public \texttt{<init>(String, int)}\footnote{Specifically, method \texttt{<init>(String, int)} returning a \texttt{void} on class \texttt{org.apache.http.HttpHost}} method\todo{why does it start from HttpHost and not somewhere else?} and identifies the set of all transitively reachable methods. UnCheckGuard then collects all unchecked exceptions thrown within this set and applies taint analysis using FlowDroid~\cite{Arzt14:_flowdroid} to check whether method parameters controlled by the client can reach the exception sites. If the exception is unreachable from client code (in terms of taint analysis), then the client cannot supply values to the library which will trigger the exception. In version 4.4.6, it finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each of which the client can potentially trigger using the values it chooses to pass to the library as parameters.
+To detect this change, UnCheckGuard processes JAR files for both \texttt{httpcore-4.4.6} and \texttt{httpcore-4.4.16}. It uses SootUp~\cite{Karakaya24:_sootup} to construct an RTA-based call graph~\cite{bacon96:_fast_static_analy_c_virtual_funct_calls} starting from the public \texttt{<init>(String, int)}\footnote{Specifically, method \texttt{<init>(String, int)} returning a \texttt{void} on class \texttt{org.apache.http.HttpHost}} method and identifies the set of all transitively reachable methods. It starts from the public \texttt{<init>(String, int)} method as that is the method used by the client from \texttt{htttpcore} library. UnCheckGuard then collects all unchecked exceptions thrown within this set and applies taint analysis using FlowDroid~\cite{Arzt14:_flowdroid} to check whether method parameters controlled by the client can reach the exception sites. If the exception is unreachable from client code (in terms of taint analysis), then the client cannot supply values to the library which will trigger the exception. In version 4.4.6, it finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each of which the client can potentially trigger using the values it chooses to pass to the library as parameters.
 
 \paragraph{Client} 
 A newly-added exception is only relevant to a client if the client may
 potentially trigger that exception.  It turns out that
-our \texttt{HttpAsyncClientUtils} client has reachable\todo{from its main?} code that
-creates an \texttt{HttpHost} with an empty \texttt{host}. The
-public \texttt{createAsyncClient(boolean)}\footnote{Fully-qualified: method \texttt{createAsyncClient(boolean)} returning a \texttt{CloseableHttpAsyncClient} on class \texttt{Util.HttpClientUtil.HttpAsyncClient}.} method takes a \texttt{proxy}
+our \texttt{HttpAsyncClientUtils} client has reachable code from the public \texttt{createAsyncClient(boolean)}\footnote{Fully-qualified: method \texttt{createAsyncClient(boolean)} returning a \texttt{CloseableHttpAsyncClient} on class \texttt{Util.HttpClientUtil.HttpAsyncClient}.} method
+that creates an \texttt{HttpHost} with an empty \texttt{host}. The
+public \texttt{createAsyncClient(boolean)} method takes a \texttt{proxy}
 parameter and contains the following code:
 \begin{lstlisting}[language=Java,basicstyle=\scriptsize\ttfamily]
  if (proxy) {
