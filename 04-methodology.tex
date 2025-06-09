@@ -65,7 +65,7 @@ static CodedInputStream newInstance(
 }
 \end{lstlisting}
 
-In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Our taint analysis confirms that no source for len flows into the sink (exception)\todo{What are the possible sources?}. This shows the importance of having taint analysis to verify whether the exception can actually cause a behavioural breaking change in the client.
+In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Our taint analysis confirms that no user-supplied value (source) flows into the \texttt{IllegalArgumentException} (sink), nor does it taint the variable \texttt{len}. This shows the importance of having taint analysis to verify whether the exception can actually cause a behavioural breaking change in the client.
 
 To enable taint analysis, we automatically generate a \textit{driver stub} for each library method used by the client. We generate this stub because, to our knowledge, FlowDroid does not allow marking method parameters directly as sources. Instead, we wrap each parameter in a synthetic method whose return value is marked as a source. This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
 \begin{itemize}
