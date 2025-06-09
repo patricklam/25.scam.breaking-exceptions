@@ -14,13 +14,13 @@ After carrying out the data collection steps in Section~\ref{sec:data-collection
 
 The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis. An overview of the full pipeline is shown in Figure~\ref{fig:jsonjava}.
 
-As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.\todo{do we retain all such clients or do we throw any out for any reason? - we retain all clients that compile to a jar}
+As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
 After selecting the valid clients and compiling them into JAR files, we proceed to extract relevant method-level knowledge from both the client and the current version of the libraries it depends on.
 
 We use SootUp~\cite{Karakaya24:_sootup} to analyze the client JAR and identify all external method invocations. UnCheckGuard performs this analysis by traversing the Jimple intermediate representation of each client method and checking whether any statement contains an \texttt{InvokeExpr}, which represents a method invocation. For each invocation, we retrieve the declaring class type of the target method. We then check whether this class type is part of the client’s SootUp view---essentially, whether it was declared in the client JAR file. If the class type is not found in the view, we mark the method as external. This process allows us to filter out internal method calls and focus only on invocations to library methods.
 
-In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures\todo{this doesn't completely work, it's not C, there is dynamic dispatch; for instance, client may have a call to List.add() and library defines LinkedList.add and ArrayList.add() - we are getting the method signature of the external method used by the client and then also getting the method signature of the methods in the library}. This one-to-one mapping enables us to identify exactly which library methods are invoked by which client methods.
+In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures\todo{this doesn't completely work, it's not C, there is dynamic dispatch; for instance, client may have a call to List.add() and library defines LinkedList.add and ArrayList.add() - pending}. This one-to-one mapping enables us to identify exactly which library methods are invoked by which client methods.
 
 At the end of this stage, we produce a structured mapping between client methods and the external library methods they invoke. This mapping serves as a foundation for later stages in our analysis, where we detect behavioural changes in upgraded library versions and trace their potential impact on client call sites.
 
@@ -39,9 +39,35 @@ After building the RTA-based call graph, we traverse the entire callgraph and co
 
 \subsubsection{Exception Verification with Taint Analysis}
 
-Once we collect the list of unchecked exceptions, we filter out those that cannot be triggered by the client. We use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework, for this purpose.
+Once we collect the list of unchecked exceptions, we need to determine which of them can actually be triggered by client inputs. This is necessary because many exceptions that show up during call graph analysis are not reachable in practice—they rely on internal values rather than any parameters the client supplies. To filter out such cases, we use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework.
 
-To enable taint analysis, we automatically generate a \textit{driver stub} for each library method used by the client\todo{let's improve this. first, why do we want to do taint analysis at all? think about how well what we've explained so far justifies that. do we have enough examples about it, and should we have another mini-example in this section? We have an example below, maybe we move it up and talk about how tainting works here, if it's appropriate. second, why do we need to generate a driver stub anyway? why can't we just use taint analysis?}. The stub declares each method parameter as a taint source. For each parameter, we define a wrapper function and mark its return value as a FlowDroid source. Stub generation, implemented using SootUp, handles a variety of cases, including:
+Consider the following real case. The client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{copyFromUtf8(String)} from the library \texttt{protobuf-java-2.6.1}. When this library is upgraded to \texttt{protobuf-java-4.30.1}, the method's implementation adds a new unchecked exception—an \texttt{IllegalArgumentException}. Our tool initially flags this as a behavioural breaking change because the exception is present in the upgraded version and not in the previous one, and because there is a path from the client method to the callsite where the exception is thrown.
+
+However, a closer inspection shows that this exception cannot be triggered by any value passed from the client. The method that throws the exception looks like this:
+
+\begin{lstlisting}[language=Java,breaklines=true,basicstyle=\scriptsize\ttfamily]
+static CodedInputStream newInstance(
+    final byte[] buf, final int off, final int len, final boolean bufferIsImmutable) {
+  ArrayDecoder result = new ArrayDecoder(buf, off, len, bufferIsImmutable);
+  try {
+    result.pushLimit(len);
+  } catch (InvalidProtocolBufferException ex) {
+    // The only reason pushLimit() might throw an exception here is if len
+    // is negative. Normally pushLimit()'s parameter comes directly off the
+    // wire, so it's important to catch exceptions in case of corrupt or
+    // malicious data. However, in this case, we expect that len is not a
+    // user-supplied value, so we can assume that it being negative indicates
+    // a programming error. Therefore, throwing an unchecked exception is
+    // appropriate.
+    throw new IllegalArgumentException(ex);
+  }
+  return result;
+}
+\end{lstlisting}
+
+In the comment written by the library developer, the developer confirms that this exception cannot be thrown because of user-supplied values. Our taint analysis also confirms that the source does not flow into the sink (exception). This shows the importance of having taint analysis to verify whether the exception will actually cause a behavioural breaking change in the client.
+
+To enable taint analysis, we automatically generate a \textit{driver stub} for each library method used by the client. The stub declares each method parameter as a taint source. For each parameter, we define a wrapper function and mark its return value as a FlowDroid source. Stub generation, implemented using SootUp, handles a variety of cases, including:
 \begin{itemize}
   \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
   \item Static and instance methods
@@ -117,7 +143,7 @@ public static void applicableTo(PCollection<?> input) {
 \end{figure}
 
 
-In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.\todo{this is getting better, but say a bit more about why we should care about this method even if there is no PCollection instantiation? Basically, why is this method actually callable? (actually, it's static, and presumably it could be called with null, so I'm a bit confused here. Wait, is it just that this method is just never actually called? Why do we consider it with CHA? Is it an entry points issue? I'm confused and I don't completely remember where static methods appear in call graphs. Is there any method tht calls applicableTo in the client?)}
+In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.\todo{this is getting better, but say a bit more about why we should care about this method even if there is no PCollection instantiation? Basically, why is this method actually callable? (actually, it's static, and presumably it could be called with null, so I'm a bit confused here. Wait, is it just that this method is just never actually called? Why do we consider it with CHA? Is it an entry points issue? I'm confused and I don't completely remember where static methods appear in call graphs. Is there any method tht calls applicableTo in the client?) - applicableTo is directly called by the client }
 
 This trade-off justifies the use of CHA in the verification phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
