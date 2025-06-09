@@ -8,7 +8,7 @@ To obtain this information, our methodology involves carrying out several key st
 
 To begin our analysis, we first collected suitable client projects. We used the DUETS dataset~\cite{durieux21:_duets}, which provides a curated list of Java-based clients hosted on GitHub, each with at least five stars. We attempted to download each client repository and discarded any client that failed to download.
 
-Next, we checked whether the project included a \texttt{pom.xml} file, which indicates that it is a Maven-based project. This step was essential, as our analysis depends on running Maven commands. We compiled each client to produce a JAR file and kept only\todo{can we say we kept all clients that passed the tests?} those clients that compiled successfully for further analysis.
+Next, we checked whether the project included a \texttt{pom.xml} file, which indicates that it is a Maven-based project. This step was essential, as our analysis depends on running Maven commands. We compiled each client to produce a JAR file and kept only those clients that compiled successfully for further analysis.
 
 \subsection{Library Version Resolution}
 
@@ -24,7 +24,7 @@ This process yields both the original and the upgraded versions of each library 
 
 \subsection{Method and Exception Extraction}
 
-We analyze the JAR file of the client application using SootUp to extract all external method invocations performed by the client (by external, we mean to methods outside the client). Based on this set of method calls, we analyze both the currently used version of the library and its latest available version.\todo{we should run all the testcases for the clients for all client/library pairs, but with the newest versions of the libraries}
+We analyze the JAR file of the client application using SootUp to extract all external method invocations performed by the client (by external, we mean to methods outside the client). Based on this set of method calls, we analyze both the currently used version of the library and its latest available version.
 
 To support this comparison, we also extract the list of methods present in the current version of the library. This allows us to match each external method call made by the client to its corresponding definition in the library. Using this information, we generate a JSON file that contains only the subset of library methods actually used by the client. This filtered list reduces the work necessary in subsequent steps.
 
