@@ -19,7 +19,7 @@ Notably, 6 out of these 8 libraries introduced such changes as part of a major v
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Yes, Java libraries frequently introduce newly added unchecked exceptions across versions. Out of 98 client-library pairs, we identified 14 callsites affected by newly added unchecked exceptions across 8 libraries. These changes occurred in major version upgrades (6 times) but also in minor (1) and even patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. Out of 98 client-library pairs, we identified 14 callsites affected by newly added unchecked exceptions across 8 libraries (8\%). These changes occurred in major version upgrades (6 times) but also in minor (1) and even patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
