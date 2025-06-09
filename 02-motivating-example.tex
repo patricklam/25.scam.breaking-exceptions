@@ -55,9 +55,12 @@ where \texttt{host} is a private field initialized to the empty string.
 Thus, calling \texttt{createAsyncClient(true)} triggers an exception when executed with
 \texttt{httpcore} version 4.4.16 but not with 4.4.6.
 
-To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all external library methods invoked anywhere in the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means
-that the client can trigger the exception in the library on some execution of the program, using values it passes to the library as parameters.
-\todo{this is why we use taint analysis and it just passes without enough comment here; write more}
+To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all external library methods invoked anywhere in the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means that the client can trigger the exception in the library on some execution of the program, using values it passes to the library as parameters.
+
+In order to check if the client-supplied values can reach the exception-throwing site, we use taint analysis. Taint analysis is essential in this scenario because a path from the client callsite to an exception-throwing statement is not sufficient to conclude that the exception is actually triggerable by the client. Many such paths may exist, but the control-flow conditions leading to the exception might depend entirely on internal library values, rather than on client-supplied inputs. Therefore, taint analysis becomes necessary to distinguish actual behavioural breaking changes from false positives.
+
+Taint analysis helps by tracking whether any client-supplied value (source) can propagate to the conditional or operation that triggers the exception (sink). If taint analysis determines that no client-supplied input flows into the exception-triggering logic, then we can conclude that the newly added exception will not cause a behavioural breaking change.
+
 This implies that a path exists in the interprocedural control-flow graph (which one can compute with Class Hierarchy Analysis (CHA)) from the client method to the statement throwing the exception in the library.
 
 In this case, based on the confirmed reachability of the new exception, we report that the library-client pair \texttt{HttpAsyncClientUtils} and \texttt{httpcore} exhibits a behavioural breaking change.
@@ -80,7 +83,3 @@ void testCreateAsyncClientThrowsExceptionForEmptyProxyHost() {
       "after upgrading to httpcore-4.4.16");
 }
 \end{lstlisting}
-
-
-
-
