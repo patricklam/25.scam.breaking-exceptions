@@ -11,9 +11,13 @@ We explore the following research questions:
   \item[\textbf{RQ2:}] Do library clients, in practice, call methods with new added exceptions, and is it possible for the clients to trigger these exceptions? Is it possible to write client test cases that trigger the exceptions?
 \end{itemize}
 
-\subsection{Addition of Exceptions in Java Libraries}
+\todo{There is a funnel from newly-added exceptions to exceptions called by the client to exceptions called by the client where the client can exploit the new exception to exceptions where we have a test case. It could go here.}
 
-Our evaluation included 36 client applications, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
+\subsection{Newly-added Exceptions in Java Libraries}
+
+Our evaluation included 36 client applications, which depended on 68 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. Some of the libraries were used by multiple clients.\todo{how many clients used multiple libraries in our corpus? is the previous sentence true?}
+
+
 
 UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
 
