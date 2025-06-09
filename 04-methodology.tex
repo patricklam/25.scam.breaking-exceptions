@@ -132,18 +132,22 @@ public static void applicableTo(PCollection<?> input) {
 
 % Labels
 \node[align=left, font=\scriptsize] at ([xshift=1.9cm,yshift=0.1cm]cond.east) {\textbf{CHA:} includes both branches};
-\draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips method due to\\ uninstantiated \texttt{PCollection}} (noexc.west);
+\draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips method due to\\ uninstantiated classes} (noexc.west);
 
 \end{tikzpicture}
 }
 \vspace{-1ex}
-\caption{CHA vs. RTA: RTA excludes methods like \texttt{applicableTo(...)} when their defining class (e.g., \texttt{PCollection}) is not instantiated in the analyzed program. CHA includes them regardless of runtime instantiation.}
+\caption{CHA vs. RTA: RTA only reaches the \texttt{IllegalStateException} if types like \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed code.}
 \label{fig:rta-vs-cha}
 \vspace{-2ex}
 \end{figure}
 
 
-In this example, the parameter \texttt{input} is the taint source, and the exception is the sink. RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.\todo{this is getting better, but say a bit more about why we should care about this method even if there is no PCollection instantiation? Basically, why is this method actually callable? (actually, it's static, and presumably it could be called with null, so I'm a bit confused here. Wait, is it just that this method is just never actually called? Why do we consider it with CHA? Is it an entry points issue? I'm confused and I don't completely remember where static methods appear in call graphs. Is there any method tht calls applicableTo in the client?) - applicableTo is directly called by the client }
+In this example, the parameter \texttt{input} is the taint source, and the \texttt{IllegalStateException} is the sink. The public \texttt{applicableTo(PCollection)}\footnote{Specifically, method \texttt{applicableTo(PCollection)} returning a \texttt{void} on class \texttt{org.apache.beam.sdk.transforms.GroupByKe}} method is used by the \texttt{0xdecaf/beam-enrichment-patterns}\footnote{\url{github.com/0xdecaf/beam-enrichment-patterns}} client.
+
+RTA excludes types that are never instantiated in the analyzed program. It is more precise and reaches the exception only if actual runtime types lead to the throw statement. In contrast, CHA is more conservative. In this case, RTA reaches the \texttt{IllegalStateException} only if classes such as \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed codebase. CHA, on the other hand, includes all possible overrides regardless of whether those types are instantiated. As a result, even if the actual runtime types are unused, CHA still explores all feasible paths and reaches the IllegalStateException. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.
+
+% RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.
 
 This trade-off justifies the use of CHA in the verification phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
