@@ -15,9 +15,7 @@ We explore the following research questions:
 
 Our evaluation included 36 client applications, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
 
-\todo{libraries that have new exceptions without reference to client}
-
-UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, not all of these exceptions were actually reachable by calling methods in the client, even with a free choice of parameters to pass to the client code\todo{earlier on we should give an example of a reachable exception vs a non reachable exception}. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
+UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
 
 Notably, 6 out of these 8 libraries introduced such changes as part of a major version bump, which often signals breaking changes. However, we also observed one case each in a minor and a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
 
@@ -52,35 +50,7 @@ We initially tried to write test cases for those 142 cases but were unable to wr
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
-For example, the client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the public \texttt{copyFromUtf8(String)}\footnote{Fully-qualified: method \texttt{copyFromUtf8(String)} returning a \texttt{ByteString} on class \texttt{com.google.protobuf.ByteString}.} method
-from the library \texttt{protobuf-java-2.6.1}, which when upgraded to \texttt{protobuf-java-4.30.1} introduces a new \texttt{IllegalArgumentException}. In this case, our tool
-does confirm that a new exception has been added and we do have a path from the entry method to the exception-causing callsite. However, as we show below, the
-parameters used for resolving the condition to throw the exception are not the parameters supplied by the client, nor
-are those parameters tainted by the parameters provided by the client. Hence, it is not possible for the client-provided values
-to trigger this new exception. The method in \texttt{protobuf} that throws the unchecked exception contains the following code:\todo{I think this is what I'm complaining about should occur earlier.}
-
-\begin{lstlisting}[language=Java,breaklines=true,basicstyle=\scriptsize\ttfamily]
-static CodedInputStream newInstance(
-    final byte[] buf, final int off, final int len, final boolean bufferIsImmutable) {
-  ArrayDecoder result = new ArrayDecoder(buf, off, len, bufferIsImmutable);
-  try {
-    result.pushLimit(len);
-  } catch (InvalidProtocolBufferException ex) {
-    // The only reason pushLimit() might throw an exception here is if len
-    // is negative. Normally pushLimit()'s parameter comes directly off the
-    // wire, so it's important to catch exceptions in case of corrupt or
-    // malicious data. However, in this case, we expect that len is not a
-    // user-supplied value, so we can assume that it being negative indicates
-    // a programming error. Therefore, throwing an unchecked exception is
-    // appropriate.
-    throw new IllegalArgumentException(ex);
-  }
-  return result;
-}
-\end{lstlisting}
-
-In the comment written by the library developer, the developer confirms that this exception cannot be thrown because of
-user-supplied values.
+We have discussed a case in Section~\ref{sec:methodology} where a newly added unchecked exception was present, but the client-supplied input was unable to trigger it. In that case, as well as in other similar instances we observed, taint analysis played a crucial role in eliminating such false positives.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
@@ -96,7 +66,7 @@ UnCheckGuard not only identifies newly added exceptions but also helps assess th
 To further evaluate the real-world impact of these changes, we attempted to construct test cases that could trigger the exception at runtime. In most of these cases, we successfully created such test inputs, confirming that the exception could propagate to the client. This validates that these changes are not merely theoretical but represent concrete runtime risks.
 
 In a few instances, our analysis identified callsites where the client code either passed a hardcoded value or included precondition checks (e.g., null checks) that prevented the exception from being triggered under current conditions. While these cases did not result in immediate runtime failures, they remain important for developers to monitor. Future code changes—for instance, removing a check or altering the passed argument—could unknowingly expose these callsites to the newly added exception, leading to a breaking change.
-\todo{we should make data available including the cases}
+\todo{we should make data available including the cases - pending}
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
