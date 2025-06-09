@@ -37,7 +37,7 @@ By definition, CHA reports the most conservative soundy~\cite{livshits15:_in} an
 
 After building the RTA-based call graph, we traverse the entire callgraph and collect all exceptions that are subclasses of \texttt{java.lang.RuntimeException} or \texttt{java.lang.Error}. Per the definition of the Java programming language, such exceptions represent the complete set of unchecked exceptions that the client might be newly exposed to due to the library upgrade.
 
-\subsubsection{Exception Verification with Taint Analysis}
+\subsubsection{Exception Filtering with Taint Analysis}
 
 Once we collect the list of unchecked exceptions, we need to determine which of them can actually be triggered by client inputs. This is necessary because many exceptions that show up during call graph analysis are not reachable in practice—they rely on internal values rather than any parameters the client supplies. To filter out such cases, we use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework.
 

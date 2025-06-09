@@ -70,7 +70,7 @@ The contributions of this work are as follows:
 
 \begin{itemize}[noitemsep]
 \item We conduct an empirical study of libraries and real-world client-library pairs to assess the prevalence of behavioural breaking changes caused by newly added unchecked exceptions.
-\item We implement the \textit{UnCheckGuard} static analysis tool, which combines RTA-based call graph construction with taint analysis to detect and verify the relevance of newly added unchecked exceptions.
+\item We implement the \textit{UnCheckGuard} static analysis tool, which combines RTA-based call graph construction with taint analysis to detect the relevance of newly added unchecked exceptions.
 \item We evaluate 98 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 14 call sites where newly added unchecked exceptions could cause behavioural breaking changes, and write test cases showing that the exceptions can be triggered from client code.
 \end{itemize}
 
