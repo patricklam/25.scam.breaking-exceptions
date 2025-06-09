@@ -88,7 +88,7 @@ We initially tried to write test cases for those 142 cases but were often unable
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
-We have discussed a case in Section~\ref{sec:methodology} where a newly added unchecked exception was present, but the client-supplied input was unable to trigger it. In that case, as well as in other similar instances we observed, taint analysis played a crucial role in eliminating such false positives.
+As with the \texttt{protobuf} case in Section~\ref{sec:methodology} which added a new-but-untriggerable unchecked exception, taint analysis played a crucial role in reducing the number of false positives.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
@@ -96,10 +96,9 @@ By adding taint analysis, we reduced the number of potentially affected callsite
 \end{tcolorbox}
 \vspace{1em}
 
-
 \subsection{Impact on Clients}
 
-\todo{I think subsection B and C could be one subsection, or else we move the first paragraph up to B, and C is the ``we write manual test cases''}.
+\todo{I think subsection B and C could be one subsection, or else we move the first paragraph up to B, and C is the ``we write manual test cases''.}
 UnCheckGuard not only identifies newly added exceptions but also helps assess their practical consequences for clients. In total, across all client-library pairs, we observed 8047 external method invocations. Among these, 142 invoked library methods throw a new unchecked exception in the upgraded version. After applying reachability filtering, we retained 14 of these callsites as invoking methods with potential behavioural breaking changes. 
 
 To further evaluate the real-world impact of these changes, we attempted to construct test cases that could trigger the exception at runtime. In most of these cases\todo{how many? should be in the results table}, we successfully created such test inputs, confirming that the exception could propagate to the client. This validates that these changes are not merely theoretical but represent concrete runtime risks.
