@@ -56,8 +56,9 @@ Thus, calling \texttt{createAsyncClient(true)} triggers an exception when execut
 \texttt{httpcore} version 4.4.16 but not with 4.4.6.
 
 To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all external library methods invoked anywhere in the client. It then analyzes both the existing and the upgraded versions of the library. Using this analysis, it determines whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means
-that the client can trigger the exception on some execution of the program, using values it passes as parameters,
-which implies that a path exists in the interprocedural control-flow graph, computed with Class Hierarchy Analysis (CHA), from the client method to the exception-throwing site in the library.
+that the client can trigger the exception in the library on some execution of the program, using values it passes to the library as parameters.
+\todo{this is why we use taint analysis and it just passes without enough comment here; write more}
+This implies that a path exists in the interprocedural control-flow graph (which one can compute with Class Hierarchy Analysis (CHA)) from the client method to the statement throwing the exception in the library.
 
 In this case, based on the confirmed reachability of the new exception, we report that the library-client pair \texttt{HttpAsyncClientUtils} and \texttt{httpcore} exhibits a behavioural breaking change.
 
