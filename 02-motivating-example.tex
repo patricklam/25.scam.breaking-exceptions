@@ -1,7 +1,7 @@
 We continue with a motivating example drawn from the DUETS collection~\cite{durieux21:_duets}
 of client/library pairs. 
-Our example exhibits a case
-where a revision of the \texttt{httpcore} library adds a check for an
+In our example,
+a revision of the \texttt{httpcore} library adds a check for an
 error condition.  If the condition holds, the library method will
 explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{github.com/a63881763/HttpAsyncClientUtils}},
 calls the relevant part of the library, and thus may be affected by the new exception.

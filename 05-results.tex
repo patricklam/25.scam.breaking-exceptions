@@ -1,3 +1,5 @@
+\todo{detailed results table}
+
 We evaluated UnCheckGuard on Java-based clients from the DUETS dataset~\cite{durieux21:_duets}, selecting only clients with at least 5 stars on GitHub to ensure practical relevance.
 
 The goal of our tool is to detect whether a client calls a library method that, upon upgrading the library to a newer version, introduces a previously non-existent unchecked exception—potentially resulting in a behavioural breaking change.
@@ -12,6 +14,8 @@ We explore the following research questions:
 \subsection{Addition of Exceptions in Java Libraries}
 
 Our evaluation included 36 client applications, which depended on 83 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of its used libraries. 
+
+\todo{libraries that have new exceptions without reference to client}
 
 UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library introduced a previously unseen unchecked exception. However, not all of these exceptions were actually reachable by calling methods in the client, even with a free choice of parameters to pass to the client code\todo{earlier on we should give an example of a reachable exception vs a non reachable exception}. We therefore applied a taint-based reachability analysis to identify only those cases that could result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that were definitively affected by a newly added unchecked exception. 
 
@@ -102,10 +106,10 @@ In a few instances, our analysis identified callsites where the client code eith
 
 \subsection{Developer-Facing Implications}
 
-Behavioural breaking changes caused by unchecked exceptions during API evolution are particularly dangerous. Such changes do not show up at compile time, and they do not affect method signatures, which means that the existing tools that we are aware of simply miss them. For instance, japicmp\footnote{https://github.com/siom79/japicmp}, a widely used tool for detecting breaking changes, focuses only on syntactic differences in method signatures. While it can flag checked exceptions—since they appear in method declarations—it has no way of identifying newly added unchecked exceptions. As a result, developers who rely solely on japicmp might remain unaware of serious runtime-breaking issues.
+Behavioural breaking changes caused by unchecked exceptions during API evolution are particularly dangerous. Such changes do not show up at compile time, and they do not affect method signatures, which means that the existing tools that we are aware of cannot detect them. For instance, japicmp\footnote{https://github.com/siom79/japicmp}, a widely used tool for detecting breaking changes, focuses only on syntactic differences in method signatures. While it can flag checked exceptions—since they appear in method declarations—it has no way of identifying newly added unchecked exceptions. As a result, developers who rely solely on japicmp could remain unaware of serious runtime-breaking issues.
 
 Some tools have tried to tackle the challenge of behavioural breaking changes. CompCheck~\cite{CompCheck}, for example, works by identifying test cases in some clients and reusing them for others with similar API usage. But this approach depends heavily on the presence of thorough test suites. In practice, most clients do not have such comprehensive coverage, especially not for edge cases involving unchecked exceptions.
 
-This is where UnCheckGuard steps in. Unlike existing work, it does not rely on existing test cases. Instead, it compares the old and new versions of a library using static analysis to detect newly added unchecked exceptions, and then runs taint analysis to verify which ones might actually affect the client. By avoiding the need for a test suite, it can reveal behavioural breaking changes that other tools completely overlook.
+This is where UnCheckGuard steps in. Unlike existing work, it does not rely on existing test cases. Instead, it compares the old and new versions of a library using static analysis to detect newly added unchecked exceptions, and then runs taint analysis to verify which ones might actually affect the client. By avoiding the need for a test suite, it can reveal behavioural breaking changes that other tools overlook.
 
 In doing so, UnCheckGuard addresses an important gap. It gives developers visibility into a class of breaking changes that are easy to miss but costly in practice—helping them catch potential failures early, before they reach production.
