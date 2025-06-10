@@ -13,6 +13,8 @@ Next, we checked whether the project included a \texttt{pom.xml} file, which ind
 
 \subsection{Library Version Resolution}
 
+We pair each client with all the libraries it depends on, rather than relying solely on the client-library pairs provided by DUETS.
+
 Our tool relies on analyzing both the version of the library currently used by the client and the latest available version (as stored in the Maven Central Repository). To collect the current version, we run the Maven command \texttt{mvn dependency:copy-dependencies}, which downloads all the dependencies declared in the client's build configuration.
 
 To obtain the latest versions of these dependencies, we run the following Maven command:
