@@ -20,9 +20,9 @@ After selecting the valid clients and compiling them into JAR files, we proceed 
 
 We use SootUp~\cite{Karakaya24:_sootup} to analyze the client JAR and identify all external method invocations. UnCheckGuard performs this analysis by traversing the Jimple intermediate representation of each client method and checking whether any statement contains an \texttt{InvokeExpr}, which represents a method invocation. For each invocation, we retrieve the declaring class type of the target method. We then check whether this class type is part of the client’s SootUp view---essentially, whether it was declared in the client JAR file or the Java standard library. If the class type is not found in the view, we mark the method as external. This process allows us to filter out internal method calls and focus only on invocations to external library methods.
 
-In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures. For the matching process, we perform an exact match between the declaring type of the method invoked by the client and that in the library. However, this approach may miss some valid matches in the presence of dynamic dispatch, where the runtime type differs from the static type used at the call site. This one-to-one mapping enables us to identify exactly which library methods are invoked by which client methods.
+In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures. For the matching process, for simplicity, we perform an exact match between the declaring type of the method invoked by the client and that in the library to create a client/library mapping. This approach may miss some valid matches in the presence of dynamic dispatch---the declared receiver object type may differ from actual receiver object type that the client uses at the call site.
 
-At the end of this stage, we produce a structured mapping between client methods and the external library methods they invoke. This mapping serves as a foundation for later stages in our analysis, where we detect behavioural changes in latest library versions and trace their potential impact on client call sites.
+Our client/library mapping identifies library methods and links them to where they can be invoked by the client. This mapping serves as a foundation for later stages in our analysis, where we detect behavioural changes in the latest versions of libraries and traces their potential impact on client call sites.
 
 \subsection{Finding Newly Added Unchecked Exceptions}
 
@@ -39,7 +39,7 @@ After building the RTA-based call graph, we traverse the entire callgraph and co
 
 \subsubsection{Exception Filtering with Taint Analysis}
 
-Once we collect the list of unchecked exceptions, we need to determine which of them can actually be triggered by client inputs. This is necessary because many exceptions that show up during call graph analysis are not reachable in practice—they rely on internal values rather than any parameters the client supplies. To filter out such cases, we use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework.
+Once we collect the list of unchecked exceptions, we need to determine which of them can actually be triggered by client inputs. This is necessary because many exceptions that show up during call graph analysis are not reachable in practice—they rely on internal values rather than any parameters the client supplies (see below for an example). To filter out such cases, we use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework.
 
 Consider the following case from our corpus. The client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{copyFromUtf8(String)} from the library \texttt{protobuf-java-2.6.1}. This method, in turn, reaches the internal method \texttt{newInstance} in its call graph. When the library is upgraded to \texttt{protobuf-java-4.30.1}, the implementation of \texttt{newInstance} introduces a new unchecked exception—an \texttt{IllegalArgumentException}. Our tool initially flags this as a behavioural breaking change because the exception is newly introduced, and an interprocedural control-flow path exists from the client code to the exception site.
 
@@ -67,9 +67,11 @@ static CodedInputStream newInstance(
 }
 \end{lstlisting}
 
-In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method by initially calling methods that are part of \texttt{protobuf}'s API. Our taint analysis confirms that no user-supplied value (source) flows from the client into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the exception can actually cause a behavioural breaking change in the client.
+In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method through methods that are part of \texttt{protobuf}'s public API. Our taint analysis confirms that no client-supplied value (source) flows into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the newly-added exception can actually cause a behavioural breaking change in the client.
 
-For technical reasons related to FlowDroid, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. FlowDroid does not allow method parameters to be marked directly as taint sources. To work around this, we wrap each parameter in a synthetic method and mark its return value as a source. In our analysis, we treat the parameters of library methods invoked by the client as taint sources, since these are the only values under the client’s control. We are specifically interested in whether these client-supplied values can trigger newly introduced exceptions. If not, then the exception is effectively unreachable from the client, and thus does not constitute a behavioural breaking change. Finally, we treat each exception identified in the previous step as a potential taint sink.
+For technical reasons related to FlowDroid, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. FlowDroid does not allow method parameters to be marked directly as taint sources. To work around this, we wrap each parameter in a synthetic method and mark its return value as a source.
+
+In our analysis, we mark the parameters of library methods that are invoked by the client as taint sources (in the example in Section~\ref{sec:motivating}, the \texttt{HttpHost} constructor parameters), since these are the only values under the client’s control. We also mark each exception identified in the Analysis Setup step as a potential taint sink. We use the taint analysis to estimate whether the client-supplied parameter values can trigger newly introduced exceptions. If they cannot, then the exception is effectively unreachable from the client, and thus does not constitute a behavioural breaking change. 
 
 %% This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
 %% \begin{itemize}
@@ -98,7 +100,8 @@ For technical reasons related to FlowDroid, we automatically generate a \textit{
 
 %% In the above example of the driver stub, we generate a stub for library \texttt{fastjson-1.2.58}'s public \texttt{getIntValue(String)} method\footnote{Fully-qualified name: method \texttt{getIntValue(String)}, returning a \texttt{int} on class \texttt{com.alibaba.fastjson.JSONObject}}. This method has a \texttt{java.lang.String} parameter. We therefore declare a method named \texttt{source0} in the driver stub, and declare that method to be a source; FlowDroid then marks its return value as a source. We generate the way \texttt{getIntValue} is called based on the type of method it is, and obtain the properties of the method using SootUp.
 
-We treat each exception discovered in the RTA phase as a \textit{taint sink}. For this analysis, we intentionally construct the call graph using Class Hierarchy Analysis (CHA). Although CHA is less precise than RTA, it offers conservative coverage, reducing the risk of missing true positive flows due to aggressive pruning.
+% I think we don't need to talk about this anymore
+%% We treat each exception discovered in the RTA phase as a \textit{taint sink}. For this analysis, we intentionally construct the call graph using Class Hierarchy Analysis (CHA). Although CHA is less precise than RTA, it offers conservative coverage, reducing the risk of missing true positive flows due to aggressive pruning.
 
 Consider the following method from the \texttt{beam-sdks-java-core} library:
 
@@ -113,49 +116,49 @@ public static void applicableTo(PCollection<?> input) {
 }
 \end{lstlisting}
 
-\begin{figure}[t]
-\centering
-\scalebox{0.75}{
-\begin{tikzpicture}[
-  node distance=1.4cm and 1.5cm,
-  box/.style={rectangle, draw, rounded corners, minimum height=1.2em, text width=2.8cm, align=center, font=\scriptsize},
-  every edge/.style={draw, -{Latex[width=2mm]}},
-  rededge/.style={draw=red, thick, dashed, -{Latex[width=2mm]}}
-  ]
+%% \begin{figure}[t]
+%% \centering
+%% \scalebox{0.75}{
+%% \begin{tikzpicture}[
+%%   node distance=1.4cm and 1.5cm,
+%%   box/.style={rectangle, draw, rounded corners, minimum height=1.2em, text width=2.8cm, align=center, font=\scriptsize},
+%%   every edge/.style={draw, -{Latex[width=2mm]}},
+%%   rededge/.style={draw=red, thick, dashed, -{Latex[width=2mm]}}
+%%   ]
 
-% Nodes
-\node[box] (start) {\textbf{Method Entry}\\ \texttt{applicableTo(...)}};
-\node[box, below=of start] (cond) {\textbf{Condition}\\ \texttt{input.isBounded() != BOUNDED}};
-\node[box, below left=of cond] (exc) {Throws \\ \texttt{IllegalStateExcep...}};
-\node[box, below right=of cond] (noexc) {Execution continues};
+%% % Nodes
+%% \node[box] (start) {\textbf{Method Entry}\\ \texttt{applicableTo(...)}};
+%% \node[box, below=of start] (cond) {\textbf{Condition}\\ \texttt{input.isBounded() != BOUNDED}};
+%% \node[box, below left=of cond] (exc) {Throws \\ \texttt{IllegalStateExcep...}};
+%% \node[box, below right=of cond] (noexc) {Execution continues};
 
-% Edges
-\path (start) edge (cond);
-\path (cond) edge (exc);
-\path (cond) edge (noexc);
+%% % Edges
+%% \path (start) edge (cond);
+%% \path (cond) edge (exc);
+%% \path (cond) edge (noexc);
 
-% Labels
-\node[align=left, font=\scriptsize] at ([xshift=1.9cm,yshift=0.1cm]cond.east) {\textbf{CHA:} includes both branches};
-\draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips method due to\\ uninstantiated classes} (noexc.west);
+%% % Labels
+%% \node[align=left, font=\scriptsize] at ([xshift=1.9cm,yshift=0.1cm]cond.east) {\textbf{CHA:} includes both branches};
+%% \draw[rededge] (start.east) to[out=10,in=90] node[right, align=center, font=\scriptsize] {\textbf{RTA:} skips method due to\\ uninstantiated classes} (noexc.west);
 
-\end{tikzpicture}
-}
-\vspace{-1ex}
-\caption{CHA vs. RTA: RTA only reaches the \texttt{IllegalStateException} if types like \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed code.}
-\label{fig:rta-vs-cha}
-\vspace{-2ex}
-\end{figure}
+%% \end{tikzpicture}
+%% }
+%% \vspace{-1ex}
+%% \caption{CHA vs. RTA: RTA only reaches the \texttt{IllegalStateException} if types like \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed code.}
+%% \label{fig:rta-vs-cha}
+%% \vspace{-2ex}
+%% \end{figure}
 
 
-In this example, the parameter \texttt{input} is the taint source, and the \texttt{IllegalStateException} is the sink. The public \texttt{applicableTo(PCollection)}\footnote{Fully-qualified name: method \texttt{applicableTo(PCollection)} returning a \texttt{void} on class \texttt{org.apache.beam.sdk.transforms.GroupByKe}} method is used by the \texttt{0xdecaf/beam-enrichment-patterns}\footnote{\url{github.com/0xdecaf/beam-enrichment-patterns}} client.
+In this example, the parameter \texttt{input} is the taint source, and the \texttt{new IllegalStateException()} is the sink (to be precise, the exception's constructor). The public \texttt{applicableTo(PCollection)}\footnote{Fully-qualified name: method \texttt{applicableTo(PCollection)} returning a \texttt{void} on class \texttt{org.apache.beam.sdk.transforms.GroupByKe}} method is used by the \texttt{0xdecaf/beam-enrichment-patterns}\footnote{\url{github.com/0xdecaf/beam-enrichment-patterns}} client.
 
-RTA excludes types that are never instantiated in the analyzed program. It is more precise and reaches the exception only if actual runtime types lead to the throw statement. In contrast, CHA is more conservative. In this case, RTA reaches the \texttt{IllegalStateException} only if classes such as \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed codebase. CHA, on the other hand, includes all possible overrides regardless of whether those types are instantiated. As a result, even if the actual runtime types are unused, CHA still explores all feasible paths and reaches the IllegalStateException. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.\todo{I still don't believe this: if GlobalWindows or DefaultTrigger are never invoked, why does it matter?}
+%% RTA excludes types that are never instantiated in the analyzed program. It is more precise and reaches the exception only if actual runtime types lead to the throw statement. In contrast, CHA is more conservative. In this case, RTA reaches the \texttt{IllegalStateException} only if classes such as \texttt{GlobalWindows} or \texttt{DefaultTrigger} are instantiated in the analyzed codebase. CHA, on the other hand, includes all possible overrides regardless of whether those types are instantiated. As a result, even if the actual runtime types are unused, CHA still explores all feasible paths and reaches the IllegalStateException. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.\todo{I still don't believe this: if GlobalWindows or DefaultTrigger are never invoked, why does it matter?}
 
 % RTA excludes types that are never instantiated in the analyzed program. As a result, if no code in the client or the library instantiates a \texttt{PCollection}, the method \texttt{applicableTo(PCollection)} may not appear in the RTA-generated call graph at all. This exclusion causes the exception thrown in that method to be missed. In contrast, CHA includes all types from the class hierarchy regardless of instantiation, so the method is included in the call graph along with the conditional path to the exception. As shown in Figure~\ref{fig:rta-vs-cha}, this broader approximation allows the taint analysis to identify exception flows that RTA would miss due to its stricter instantiation-based filtering.
 
-This trade-off justifies the use of CHA in the filtering phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
+%% This trade-off justifies the use of CHA in the filtering phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
-After collecting the list of unchecked exceptions for each method in both the old and latest versions of the library, we perform a comparison to identify newly introduced exceptions. If a method exists in the old version but is missing from the latest version, we exclude it from our analysis, as its removal may indicate a method signature–based breaking change, which is handled by existing tools and lies outside the scope of our detection.
+After collecting the list of unchecked exceptions for each method in both the current and latest versions of the library, we perform a comparison to identify newly introduced exceptions. If a method exists in the old version but is missing from the latest version, we exclude it from our analysis. Its removal may indicate a method signature–based breaking change, but those are handled by existing tools and lie outside the scope of our detection.
 
 For methods that appear in both versions, we compare the sets of unchecked exceptions that they throw. We perform this comparison using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains any additional unchecked exceptions, we classify it as a method with a newly added unchecked exception. Otherwise, we discard it from further consideration; our technique cannot find new exception-related behavioural breaking changes for this library method.
 
