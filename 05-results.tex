@@ -16,7 +16,7 @@ Further, we also discuss the
 
 \subsection{Newly-added Unchecked Exceptions in Java Libraries}
 
-Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. 
+Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents our clients and libraries, the number of client callsites invoking methods in the library with newly-added exceptions, and the number of these callsites that pass the taint analysis reachability filter.
 
 UnCheckGuard detected 268 callsites across these 99 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 49 callsites in total—spanning 9 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 
