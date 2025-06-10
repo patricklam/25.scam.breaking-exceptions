@@ -11,8 +11,22 @@ and under what circumstances do such exceptions occur (e.g. major/minor/patch ve
 \end{itemize}
 
 
-Further, we also discuss the 
-\todo{Funnel}
+\begin{table}[h]
+\centering
+\caption{Exception Analysis Funnel}
+\label{tab:exception-funnel}
+\begin{tabular}{l r}
+\toprule
+\textbf{Stage} & \textbf{Count} \\
+\midrule
+Client Invocations of External Methods & 8048 \\
+Newly Added Exceptions Called by Clients & 285 \\
+Exceptions Passing Taint Analysis & 49 \\
+Exceptions with a Test Case & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 
 \subsection{Newly-added Unchecked Exceptions in Java Libraries}
 
@@ -22,7 +36,11 @@ UnCheckGuard detected 285 callsites across these 99 pairs where the upgraded ver
 
 Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version changes $y$ may include new features, while patch changes $z$ fix bugs.
 
+<<<<<<< HEAD
+Notably, Table~\ref{tab:version-distribution} showcases that 7 out of these 8 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
+=======
 Table~\ref{tab:version-distribution} shows the distribution of newly-added exceptions reachable from clients, across upgrade types. Notably, 7 out of these 8 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
+>>>>>>> 3fb9cd467d9eb201e59d55fa15fb551b7823d925
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
@@ -95,7 +113,7 @@ a63881763/HttpAsyncClientUtils & & & 5 & \\
 \subsection{Writing Manual Test Cases}
 We apply taint analysis in our tool to help filter out irrelevant answers. When we run our tool based only on a CHA-based call graph, which
 searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get
-285 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
+285 (as depicted in ~\ref{t}) callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
 
 We initially tried to write test cases for those 285 cases but were often unable to write a test case that could trigger
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
