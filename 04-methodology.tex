@@ -164,21 +164,24 @@ For methods that appear in both versions, we compare the sets of unchecked excep
 
 \subsection{Filtering Untriggerable Unchecked Exceptions}
 
-Based on the information collected about newly added unchecked exceptions, we use the previously generated client-to-library method mapping to determine which client methods invoke a library method that now throws a new unchecked exception. This step allows us to identify specific client call sites that may be affected by behavioural breaking changes introduced in the upgraded library version.
+Based on the information collected about newly added unchecked exceptions, we use the previously generated client-to-library method mapping to determine which client methods invoke a library method that now throws a new unchecked exception. This step allows us to identify specific call sites in the client that may be affected by behavioural breaking changes introduced in the upgraded library version.
 
-To validate the practical impact of these changes, we manually write test cases to assess whether the client can actually trigger the exception. Each test case is constructed starting from the client call site identified in the mapping. We then examine the method that was flagged as containing a newly added unchecked exception. This information is available in the JSON output produced by our tool, which includes the exception type and the method signature in which it occurs.
+To validate the practical impact of these changes, we manually write test cases to assess whether the client can actually trigger the exception. Our goal is to write a test case that uses client code to trigger the exception.
 
-The JSON output helps us locate the exact exception-throwing line in the library, which enables a detailed inspection of how the exception is triggered. We first test the exception by directly calling the relevant library method with crafted parameters. If this call triggers the exception, we proceed to construct a full test case that invokes the client method, propagating the same parameter values.
+We construct client-focussed test cases as follows. To understand the exception, we start from the client call site identified in the mapping and examine the library method that UnCheckGuard had flagged as containing a newly added unchecked exception. This information is available in the JSON output produced by our tool, which includes the exception type and the method signature in which it occurs. Given the exception type and method signature, we can easily find the exact exception-throwing line in the library. This enables a detailed inspection of how the exception is triggered.
+
+To craft a test case, we start on the library side by first triggering the exception by directly calling the relevant library method, in the library context, with crafted parameters. If this call triggers the exception (as we would expect), we then proceed to construct a full test case that invokes the client method, propagating the same parameter values.
 
 In some scenarios, we are unable to trigger the exception through the client due to certain code structures:
 \begin{itemize}
-  \item The client may pass down a hardcoded constant value, which does not trigger the exception.
+  \item The client may pass a hardcoded constant value to the library which does not trigger the exception.
   \item The client may apply explicit guards or checks before calling the affected library method.
 \end{itemize}
+There are thus at least two ways to fail in creating a test suite: (1) the client that we have will not trigger the exception because of how it uses the library; (2) no client can trigger the exception through the library's public API. Case (2) would be less common than case (1), since the library developers usually add an exception for a reason.
 
-This is similar in spirit to, for instance, security tools which report a number of potential vulnerabilities; the onus remains on the tool user to go from a potential vulnerability to proof-of-concept code.
+The potential failure to write a test case is similar in spirit to, for instance, security tools which report a number of potential vulnerabilities; the onus remains on the tool user to go from a potential vulnerability to proof-of-concept code.
 
-Even in cases where no test case could possibly trigger the exception, the information produced by our tool remains useful for the client developer, as future code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception. The library developer ought to add a description of this exception, and the circumstances under which it could be thrown, to the library method's documentation.
+Even in cases where no current client-based test case could possibly trigger the exception, the information produced by our tool remains useful for the client developer, as future code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception. The library developer ought to add a description of this exception, and the circumstances under which it could be thrown, to the library method's documentation.
 
 For example, in the client project \texttt{github.com/4ntoine/ServiceDiscovery-java}, we analyze the following code:
 
