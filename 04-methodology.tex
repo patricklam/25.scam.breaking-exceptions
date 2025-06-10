@@ -187,22 +187,24 @@ The potential failure to write a test case is similar in spirit to, for instance
 
 Even in cases where no current client-based test case could possibly trigger the exception, the information produced by our tool remains useful for the client developer, as future code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception. The library developer ought to add a description of this exception, and the circumstances under which it could be thrown, to the library method's documentation.
 
-For example, in the client project \texttt{github.com/4ntoine/ServiceDiscovery-java}, we analyze the following code:
+We present an example of an untriggerable case which still passes the taint analysis. The client project \texttt{github.com/4ntoine/ServiceDiscovery-java} contains the following code:
 
-\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily, breaklines=true]
+\begin{lstlisting}[language=Java, basicstyle=\ttfamily, breaklines=true]
 if (serviceInfo.getPayload() != null)
-    builder.setPayload(ByteString.copyFrom(serviceInfo.getPayload()));
+ builder.setPayload(
+   ByteString.copyFrom(serviceInfo.getPayload()));
 \end{lstlisting}
 
-In this case, the method with the newly added unchecked exception is:
+In this case, the library method with the newly added unchecked exception is:
 
-\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
-com.google.protobuf.ByteString.copyFrom(byte[])
+\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
+com.google.protobuf.ByteString.copyFrom(
+  byte[])
 \end{lstlisting}
 
-The client uses version 2.6.1 of \texttt{protobuf-java}, while the latest version is 4.31.0. The newly added exception, \texttt{java.lang.NullPointerException}, is thrown in the latest library if a null value is passed to \texttt{copyFrom}. The relevant code from the library looks like this:
+The client uses version 2.6.1 of \texttt{protobuf-java}, while the latest version is 4.31.0. The newly added exception, \texttt{java.lang.NullPointerException}, is thrown in the latest library if a null value is passed to \texttt{copyFrom}. The relevant transitively-called code from the library is:
 
-\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
+\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
 LiteralByteString(byte[] bytes) {
     if (bytes == null) {
         throw new NullPointerException();
@@ -211,14 +213,14 @@ LiteralByteString(byte[] bytes) {
 }
 \end{lstlisting}
 
-Although the latest version introduces a new unchecked exception, the client has already placed a guard condition:
+Although the latest version introduces a new unchecked exception, the client has already placed a guard condition which was the first line above:
 
-\begin{lstlisting}[language=Java, basicstyle=\scriptsize\ttfamily]
-if (serviceInfo.getPayload() != null)
+\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
+  if (serviceInfo.getPayload() != null)
 \end{lstlisting}
 
-This prevents the exception from being triggered. Therefore, we cannot generate a test case for this call site, but we still report it as potentially relevant.
+The guard condition does prevent the exception from being triggered by calling client methods. Therefore, we cannot generate a client-centric test case for this call site. However, we still report it, and we have argued that it is potentially relevant. The reason that we report it is that we actually only analyze the clients to extract calls to the library, so that the client-side guard is not interesting to our analysis. Our taint analysis starts on the library side of the client/library interface.
 
-In contrast, for cases where the client does not enforce such conditions and passes input parameters that can trigger the new exception, we can generate a test case to demonstrate the behavioural breaking change. In these situations, the change is not merely hypothetical—it represents an actual, runtime-breaking behaviour that occurs when the latest library is used. These tests offer actionable insights to developers by highlighting call sites could possibly trigger newly added exceptions in new library versions.
+In contrast, for cases where the client does not enforce such conditions and passes input parameters that can trigger the new exception, our experience has shown that we can generate a test case to demonstrate the behavioural breaking change. In these situations, the change is not merely hypothetical—it represents an actual, runtime-breaking behaviour that occurs when the latest library is used. These tests offer actionable insights to developers by highlighting call sites could possibly trigger newly added exceptions in new library versions.
 
 
