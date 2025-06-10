@@ -36,11 +36,8 @@ UnCheckGuard detected 285 callsites across these 99 pairs where the upgraded ver
 
 Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version changes $y$ may include new features, while patch changes $z$ fix bugs.
 
-<<<<<<< HEAD
-Notably, Table~\ref{tab:version-distribution} showcases that 7 out of these 8 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
-=======
 Table~\ref{tab:version-distribution} shows the distribution of newly-added exceptions reachable from clients, across upgrade types. Notably, 7 out of these 8 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
->>>>>>> 3fb9cd467d9eb201e59d55fa15fb551b7823d925
+
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
