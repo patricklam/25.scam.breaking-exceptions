@@ -59,7 +59,7 @@ and under what circumstances do such exceptions occur (e.g. major/minor/patch ve
 \noindent
 {\bf RQ2.} Do library clients, in practice, call methods with new added exceptions, and is it possible for the clients to trigger these exceptions? Is it possible to write client test cases that trigger the exceptions?
 
-In our corpus of 68 distinct libraries, we found 19 libraries with newly-added exceptions, including exceptions that are added in minor and patch releases.
+In our corpus of 68 distinct libraries, we found 19 libraries with newly-added exceptions, including exceptions that are added in non-major releases.
 We then investigated 98 client-library pairs to explore the prevalence of potentially breaking behavioural changes.
 We found that new potentially client-relevant unchecked exceptions occured in 8 of the 68 libraries, and that clients called methods containing these exceptions at 14 client callsites.
 This shows that client applications do in fact call library methods that throw these new exceptions.

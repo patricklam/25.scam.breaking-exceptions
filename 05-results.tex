@@ -1,4 +1,4 @@
-We evaluated UnCheckGuard on Java-based clients from the DUETS dataset~\cite{durieux21:_duets}, selecting only clients with at least 5 stars on GitHub to ensure practical relevance.
+As discussed in Section~\ref{sec:data-collection}, we evaluated UnCheckGuard on 36 Java-based clients from the DUETS dataset~\cite{durieux21:_duets}.
 
 The goal of our tool is to detect whether a client calls a library method that, upon upgrading the library to a newer version, introduces a previously non-existent unchecked exception—potentially resulting in a behavioural breaking change.
 
@@ -16,17 +16,17 @@ Further, we also discuss the
 
 \subsection{Newly-added Unchecked Exceptions in Java Libraries}
 
-Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. Some of the libraries were used by multiple clients.
-
-
+Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. 
 
 UnCheckGuard detected 268 callsites across these 99 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 49 callsites in total—spanning 9 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 
-Notably, 7 out of these 8 libraries introduced such changes as part of a major version bump, which often signals breaking changes. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
+Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version changes $y$ may include new features, while patch changes $z$ fix bugs.
+
+Notably, 7 out of these 8 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. Out of 99 client-library pairs, we identified 49 callsites affected by newly added unchecked exceptions across 8 libraries (8 out of 69 distinct libraries). These changes occurred in major version upgrades (7 times) but also in patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. We found newly added unchecked exceptions in 8 out of 69 distinct libraries (11.5\%). These changes occurred in major version upgrades (7 times) but also in patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
@@ -85,7 +85,7 @@ enrichment-patterns-1.0-SNAPSHOT & beam-sdks-java-core-2.9.0 & beam-sdks-java-co
 
 
 
-\subsection{We Write Manual Test Cases}
+\subsection{Writing Manual Test Cases}
 We apply taint analysis in our tool to help filter out irrelevant answers. When we run our tool based only on a CHA-based call graph, which
 searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get
 268 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
@@ -108,7 +108,7 @@ In other cases, the exception was not triggered immediately because the client p
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 49 such callsites across our corpus. We were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
+\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. Out of 99 client-library pairs in our corpus, we identified 49 callsites that reached newly-added exceptions, distributed across 6 of our 36 clients. We were able to construct test cases that trigger the exception in some cases.
 \end{tcolorbox}
 \vspace{1em}
 
