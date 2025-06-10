@@ -68,7 +68,7 @@ Furthermore, we demonstrated that it is possible to trigger these exceptions by 
 The contributions of this work are as follows:
 
 \begin{itemize}[noitemsep]
-\item We implement the \textit{UnCheckGuard} static analysis tool, which combines RTA-based call graph construction with taint analysis to detect the relevance of newly added unchecked exceptions.
+\item We implement the \textit{UnCheckGuard} static analysis tool, which traverses bytecode to find newly-added exceptions and filters them using taint analysis, to report relevant newly added unchecked exceptions.
 \item We conduct an empirical study of libraries to detect potential behavioural breaking changes in libraries caused by newly added unchecked exceptions.
 \item We evaluate 98 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 14 call sites where libraries' newly added unchecked exceptions could cause behavioural breaking changes in clients, and write test cases showing that the exceptions can be triggered from client code.
 \end{itemize}
