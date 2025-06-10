@@ -20,10 +20,10 @@ Table~\ref{tab:exception-funnel} summarizes our empirical findings about the pre
 \toprule
 \textbf{Stage} & \textbf{Count} \\
 \midrule
-Client Invocations of External Methods & 8048 \\
-Newly Added Exceptions Called by Clients & 285 \\
-Exceptions Passing Taint Analysis & 49 \\
-Exceptions with a Manual written Test Case & 3 \\
+Client invocations of external methods & 8048 \\
+Newly added exceptions called by clients & 285 \\
+Exceptions passing taint analysis & 49 \\
+Exceptions with a manually-written test case & 3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -42,7 +42,7 @@ Table~\ref{tab:version-distribution} shows the distribution of newly-added excep
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. We found newly added unchecked exceptions in 8 out of 69 distinct libraries (11.5\%). These changes occurred in major version upgrades (7 times) but also in patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. We found newly added unchecked exceptions in 8 out of 69 distinct libraries (11.5\%). These changes almost always occurred in major version upgrades (7 times) but also in patch (1 time) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
