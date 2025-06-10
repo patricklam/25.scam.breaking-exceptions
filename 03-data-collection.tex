@@ -21,7 +21,8 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.18.0:use-latest-versions
 This command updates the \texttt{pom.xml} file with the most recent versions of all declared dependencies. We then re-run \texttt{mvn dependency:copy-dependencies} to download the updated set of libraries.
 
 This process yields both the current and the latest versions of each library used by the client, enabling us to perform a comparative analysis of behavioural changes across library versions.
-\todo{similarly: a client presumably has many libraries that it depends on; are we using the library that DUETS pairs with the client? We should say so.}
+
+We pair each client with all the libraries it depends on, rather than relying solely on the client-library pairs provided by DUETS.
 
 \subsection{Method and Exception Extraction}
 
