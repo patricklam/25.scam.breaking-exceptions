@@ -23,33 +23,32 @@ just allows the client software to continue working, in a hopefully less-vulnera
 state.
 
 Compilers and simple static
-checkers~\cite{brito18:_apidif,foo18:_effic_static_check_librar_updat}
+checkers (including japicmp\footnote{https://github.com/siom79/japicmp} and Revapi\footnote{https://revapi.org/revapi-site/main/index.html} for Java as well as \cite{brito18:_apidif,foo18:_effic_static_check_librar_updat})
 can verify the absence of syntactic breaking changes in libraries,
 e.g. changes to signatures of public methods, retractions of
 formerly-existing methods, or even syntactic changes to library method
 implementations. The situation is worse for semantic breaking changes:
 there do not exist techniques for reliably detecting such changes. Of
 course, in its full generality, the problem is undecidable, though
-breaking change detection can be estimated using static and dynamic program analysis
+breaking change detection could be estimated using static and dynamic program analysis
 techniques.
 
-In this work, we contribute a way to detect one type of potentially breaking
-change in a library. Our work enables client developers to identify changes
+In this work, we contribute a novel way to detect one type of potentially breaking
+change in a library. Our work enables client developers to inspect relevant changes
 to the set of exceptions that may be thrown by a Java library, particularly
-by the APIs that are actually used by client code. A new exception thrown by a library
+by the APIs that are actually used by specific client code. A new exception thrown by a library
 constitutes a breaking change; uncaught exceptions can cause the client to crash or
 to exhibit unexpected behaviour.
 
 Although developers tend to ignore even checked
 exceptions~\cite{nakshatri16:_analy_java}, we contend that incrementally informing
-developers only about newly-added exceptions is likely to be more tractable, consistent with the
+developers only about relevant newly-added exceptions is likely to be more tractable, consistent with the
 design principles of Google's Tricorder tool~\cite{sadowski15:_tricor}.
 Thus, we leverage taint analysis
 to reduce the number of irrelevant reports that we report to client developers.
 We aim to show only changed library APIs that may realistically throw new exceptions
-in updated versions, minimizing the number of false positives~\cite{pashchenko20:_vuln4,pashchenko18:_vulner}.
-We hope that our reports enable developers to better understand how new exceptions affect their client code,
-possibly by writing test cases for clients that trigger these exceptions 
+in updated versions of client code, minimizing the number of false positives~\cite{pashchenko20:_vuln4,pashchenko18:_vulner}.
+We hope that our reports enable client developers to better understand how new exceptions affect their own code.
 
 We explore the following research questions:
 
@@ -69,9 +68,9 @@ Furthermore, we demonstrated that it is possible to trigger these exceptions by 
 The contributions of this work are as follows:
 
 \begin{itemize}[noitemsep]
-\item We conduct an empirical study of libraries and real-world client-library pairs to assess the prevalence of behavioural breaking changes caused by newly added unchecked exceptions.
 \item We implement the \textit{UnCheckGuard} static analysis tool, which combines RTA-based call graph construction with taint analysis to detect the relevance of newly added unchecked exceptions.
-\item We evaluate 98 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 14 call sites where newly added unchecked exceptions could cause behavioural breaking changes, and write test cases showing that the exceptions can be triggered from client code.
+\item We conduct an empirical study of libraries to detect potential behavioural breaking changes in libraries caused by newly added unchecked exceptions.
+\item We evaluate 98 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 14 call sites where libraries' newly added unchecked exceptions could cause behavioural breaking changes in clients, and write test cases showing that the exceptions can be triggered from client code.
 \end{itemize}
 
 
