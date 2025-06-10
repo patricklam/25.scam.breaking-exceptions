@@ -18,7 +18,7 @@ Further, we also discuss the
 
 Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents our clients and libraries, the number of client callsites invoking methods in the library with newly-added exceptions, and the number of these callsites that pass the taint analysis reachability filter.
 
-UnCheckGuard detected 268 callsites across these 99 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 49 callsites in total—spanning 8 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
+UnCheckGuard detected 285 callsites across these 99 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 49 callsites in total—spanning 8 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 
 Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version changes $y$ may include new features, while patch changes $z$ fix bugs.
 
@@ -60,7 +60,7 @@ Patch Version Change & 1 & 1 \\
 269941633/spring-boot-mybatis-mysql-write-read & & & 1 & \\
 6ag/im-demo-netty-tcp-websocket & netty-all-4.1.32.Final & netty-all-5.0.0.Alpha2 & 6 & 1 \\
 527515025/JavaTest & maxmind-db-1.2.2 & maxmind-db-3.2.0 & 1 & \\
-72crm/72crm-java & jfinal-4.5 & jfinal-5.2.5 & 24 & 41 \\
+72crm/72crm-java & jfinal-4.5 & jfinal-5.2.5 & 41 & 41 \\
 266945/GOIM	& jfinal-3.8	& jfinal-5.2.2 & 2 & \\
 527515025/JavaTest	& jedis-2.9.0	& jedis-6.0.0 & 1 & \\
 72crm/72crm-java	& hutool-all-4.6.8	& hutool-all-5.8.38 & 3 & 1 \\
@@ -95,9 +95,9 @@ a63881763/HttpAsyncClientUtils & & & 5 & \\
 \subsection{Writing Manual Test Cases}
 We apply taint analysis in our tool to help filter out irrelevant answers. When we run our tool based only on a CHA-based call graph, which
 searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get
-268 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
+285 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
 
-We initially tried to write test cases for those 268 cases but were often unable to write a test case that could trigger
+We initially tried to write test cases for those 285 cases but were often unable to write a test case that could trigger
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
@@ -105,7 +105,7 @@ As with the \texttt{protobuf} case in Section~\ref{sec:methodology}, which added
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-By adding taint analysis, we reduced the number of potentially affected callsites from 268 to just 49.
+By adding taint analysis, we reduced the number of potentially affected callsites from 285 to just 49.
 \end{tcolorbox}
 \vspace{1em}
 
