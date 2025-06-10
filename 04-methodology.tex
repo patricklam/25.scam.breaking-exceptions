@@ -69,32 +69,34 @@ static CodedInputStream newInstance(
 
 In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method by initially calling methods that are part of \texttt{protobuf}'s API. Our taint analysis confirms that no user-supplied value (source) flows from the client into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the exception can actually cause a behavioural breaking change in the client.
 
-For technical FlowDroid-related reasons, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. To our knowledge, FlowDroid does not allow marking method parameters directly as sources. Instead, we wrap each parameter in a synthetic method whose return value is marked as a source. This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
-\begin{itemize}
-  \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
-  \item Static and instance methods
-  \item Void and non-void return types
-  \item Primitive parameters (e.g., \texttt{int} $\rightarrow$ \texttt{0})
-  \item Object parameters (defaulted to \texttt{null})
-  \item Nested classes (converting \texttt{\$} to \texttt{.})
-  \item Multiple parameters (sources named \texttt{SourceN()}, where $N$ is the parameter index)
-  \item Overloaded methods (only one version retained)
-\end{itemize}
+For technical FlowDroid-related reasons, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. To our knowledge, FlowDroid does not allow marking method parameters directly as sources. Instead, we wrap each parameter in a synthetic method whose return value is marked as a source.
 
-An example of a driver stub follows.
-\begin{lstlisting}[language=Java,breaklines=true,breakatwhitespace=false,basicstyle=\scriptsize\ttfamily]
-public class DriverStub {
-    public static java.lang.String source0() {
-        return null;
-    }
+%% This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
+%% \begin{itemize}
+%%   \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
+%%   \item Static and instance methods
+%%   \item Void and non-void return types
+%%   \item Primitive parameters (e.g., \texttt{int} $\rightarrow$ \texttt{0})
+%%   \item Object parameters (defaulted to \texttt{null})
+%%   \item Nested classes (converting \texttt{\$} to \texttt{.})
+%%   \item Multiple parameters (sources named \texttt{SourceN()}, where $N$ is the parameter index)
+%%   \item Overloaded methods (only one version retained)
+%% \end{itemize}
 
-    public static void run() {
-        int result = new com.alibaba.fastjson.JSONObject().getIntValue(source0());
-    }
-}
-\end{lstlisting}
+%% An example of a driver stub follows.
+%% \begin{lstlisting}[language=Java,breaklines=true,breakatwhitespace=false,basicstyle=\scriptsize\ttfamily]
+%% public class DriverStub {
+%%     public static java.lang.String source0() {
+%%         return null;
+%%     }
 
-In the above example of the driver stub, we generate a stub for library \texttt{fastjson-1.2.58}'s public \texttt{getIntValue(String)} method\footnote{Fully-qualified name: method \texttt{getIntValue(String)}, returning a \texttt{int} on class \texttt{com.alibaba.fastjson.JSONObject}}. This method has a \texttt{java.lang.String} parameter. We therefore declare a method named \texttt{source0} in the driver stub, and declare that method to be a source; FlowDroid then marks its return value as a source. We generate the way \texttt{getIntValue} is called based on the type of method it is, and obtain the properties of the method using SootUp.
+%%     public static void run() {
+%%         int result = new com.alibaba.fastjson.JSONObject().getIntValue(source0());
+%%     }
+%% }
+%% \end{lstlisting}
+
+%% In the above example of the driver stub, we generate a stub for library \texttt{fastjson-1.2.58}'s public \texttt{getIntValue(String)} method\footnote{Fully-qualified name: method \texttt{getIntValue(String)}, returning a \texttt{int} on class \texttt{com.alibaba.fastjson.JSONObject}}. This method has a \texttt{java.lang.String} parameter. We therefore declare a method named \texttt{source0} in the driver stub, and declare that method to be a source; FlowDroid then marks its return value as a source. We generate the way \texttt{getIntValue} is called based on the type of method it is, and obtain the properties of the method using SootUp.
 
 We treat each exception discovered in the RTA phase as a \textit{taint sink}. For this analysis, we intentionally construct the call graph using Class Hierarchy Analysis (CHA). Although CHA is less precise than RTA, it offers conservative coverage, reducing the risk of missing true positive flows due to aggressive pruning.
 
