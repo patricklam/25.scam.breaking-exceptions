@@ -47,32 +47,37 @@ Patch Version Change & 1 & 1 \\
 \centering
 \caption{Version Changes and Associated Clients with Occurrence Counts}
 \label{tab:version-changes}
-\begin{tabular}{c >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{6cm} >{\centering\arraybackslash}p{2cm}}
+\begin{tabular}{c >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{2cm} >{\centering\arraybackslash}p{2cm}}
 \toprule
-\# & \textbf{Old Version} & \textbf{New Version} & \textbf{Clients (Occurrences)} & \textbf{Reachable (Taint Analysis)} \\
+\ \textbf{Old Version} & \textbf{Latest Version} & \textbf{Client} & \textbf{Number of Callsites} & \textbf{Reachable Callsites} \\
 \midrule
-1 & beam-sdks-java-core-2.9.0 & beam-sdks-java-core-2.65.0 & enrichment-patterns-1.0-SNAPSHOT (7) & \\
-2 & beam-sdks-java-io-google-cloud-platform-2.9.0 & beam-sdks-java-io-google-cloud-platform-2.65.0 & enrichment-patterns-1.0-SNAPSHOT (3) & \\
-3 & cglib-2.2.2 & cglib-3.3.0 & pattern-1.0-SNAPSHOT (4), tiny-spring-1.0-SNAPSHOT (2) & \\
-4 & commons-beanutils-1.8.0 & commons-beanutils-1.11.0 & firebrand-1.0-SNAPSHOT (10) & \\
-5 & commons-beanutils-1.9.3 & commons-beanutils-1.11.0 & tiny-spring-1.0-SNAPSHOT (1) & \\
-6 & commons-csv-1.3 & commons-csv-1.14.0 & tushare-1.0.0 (2) & \\
-7 & commons-logging-1.1.1 & commons-logging-1.1.3 & observer-1.0-SNAPSHOT (1) & \\
-8 & commons-logging-1.1.1 & commons-logging-1.3.5 & 52n-v3d-triturus-2.0.0-SNAPSHOT (3), firebrand-1.0-SNAPSHOT (3) & \\
-9 & fastjson-1.2.23 & fastjson-2.0.57 & tushare-1.0.0 (14) & \\
-10 & fastjson-1.2.31 & fastjson-2.0.57 & neuron-0.0.1 (5) & \\
-11 & fastjson-1.2.54 & fastjson-2.0.57 & ROOT (22) & \\
-12 & fastjson-1.2.58 & fastjson-2.0.57 & javaTest-1.0-SNAPSHOT (1) & \\
-13 & httpcore-4.4.6 & httpcore-4.4.16 & HttpAsyncClientUtils-1.0-SNAPSHOT (1) & \\
-14 & hutool-all-4.6.8 & hutool-all-5.8.38 & ROOT (1) & \\
-15 & jfinal-3.8 & jfinal-5.2.2 & im-0.0.1-SNAPSHOT (1) & \\
-16 & jfinal-4.5 & jfinal-5.2.5 & ROOT (3) & \\
-17 & maxmind-db-1.2.2 & maxmind-db-3.2.0 & javaTest-1.0-SNAPSHOT (2) & \\
-18 & netty-all-4.1.32.Final & netty-all-4.1.107.Final & tiny-spring-1.0-SNAPSHOT (4) & \\
-19 & poi-3.17 & poi-5.4.1 & ROOT (14) & \\
-20 & spring-aop-4.3.7.RELEASE & spring-aop-6.1.6 & tiny-spring-1.0-SNAPSHOT (5) & \\
-21 & spring-core-4.3.7.RELEASE & spring-core-6.1.6 & tiny-spring-1.0-SNAPSHOT (16) & \\
-22 & spring-webmvc-4.3.7.RELEASE & spring-webmvc-6.1.6 & tiny-spring-1.0-SNAPSHOT (14) & \\
+ spring-core-5.0.7.RELEASE & spring-core-6.2.7 & spring-boot-2-0.0.1-SNAPSHOT & 2 & \\
+ sonar-plugin-api-7.4 & sonar-plugin-api-9.4.0.54424 & sonar-pmd-plugin-3.0.1 & 3 & 2 \\
+ protobuf-java-2.6.1 & protobuf-java-4.31.1 & sd-1.3 & 13 & 1 \\
+ poi-3.17 & poi-5.4.1 & ROOT & 14 & 5 \\
+ pagehelper-4.1.6 & pagehelper-6.1.0 & springboot-mybatis-mysql-write-read-0.0.1-SNAPSHOT & 1 & \\
+ & & springboot-mybatis-redis-0.0.1-SNAPSHOT & 1 & \\
+ netty-all-4.1.32.Final	& netty-all-5.0.0.Alpha2 & netty-socket-1.0 & 7 & \\
+ maxmind-db-1.2.2	& maxmind-db-3.2.0 & javaTest-1.0-SNAPSHOT & 1 & \\
+ jfinal-4.5	& jfinal-5.2.5 & ROOT & 16 & 1 \\
+ jfinal-3.8	& jfinal-5.2.2 & im-0.0.1-SNAPSHOT & 2 & \\
+ hutool-all-4.6.8	& hutool-all-5.8.38 & ROOT & 3 & 1 \\
+ httpcore-4.4.6	& httpcore-4.4.16 & HttpAsyncClientUtils-1.0-SNAPSHOT & 1 & 1 \\
+ fastjson-1.2.58 & fastjson-2.0.57 & javaTest-1.0-SNAPSHOT & 1 & \\
+ fastjson-1.2.54 & fastjson-2.0.57 & ROOT & 22 & \\
+ fastjson-1.2.31 & fastjson-2.0.57 & neuron-0.0.1 & 5 & \\
+ fastjson-1.2.23 & fastjson-2.0.57 & tushare-1.0.0 & 14 & \\
+ commons-logging-1.1.1 & commons-logging-1.3.5 & 52n-v3d-triturus-2.0.0-SNAPSHOT & 3 & \\
+ & & firebrand-1.0-SNAPSHOT & 3 & \\
+ & & observer-1.0-SNAPSHOT & 1 & \\
+ commons-csv-1.3 & commons-csv-1.14.0 & tushare-1.0.0 & 2 & \\
+ commons-beanutils-1.9.3 & commons-beanutils-1.11.0 & tiny-spring-1.0-SNAPSHOT & 1 & \\
+ commons-beanutils-1.8.0 & commons-beanutils-1.11.0 & firebrand-1.0-SNAPSHOT & 10 & \\
+ cglib-2.2.2 & cglib-3.3.0 & pattern-1.0-SNAPSHOT & 4 & 1 \\
+ & & tiny-spring-1.0-SNAPSHOT & 2 & \\
+ beam-sdks-java-io-google-cloud-platform-2.9.0 & beam-sdks-java-io-google-cloud-platform-2.65.0 & enrichment-patterns-1.0-SNAPSHOT & 3 & \\
+ beam-sdks-java-core-2.9.0 & beam-sdks-java-core-2.65.0 & enrichment-patterns-1.0-SNAPSHOT & 7 & 2 \\
+
 \bottomrule
 \end{tabular}
 \end{table*}
