@@ -1,12 +1,12 @@
 This section describes the systematic approach we used to construct the dataset for our study on behavioural incompatibilities caused by newly added unchecked exceptions in upgraded Java libraries. 
 
-Broadly, we require three key components: Java-based clients that depend on third-party libraries; the versions of the libraries declared as dependencies by these clients (``current'' versions); and the latest available versions of those same libraries (``latest'' versions). For each client-library pair, we also need to extract the set of unchecked exceptions thrown by the library methods actually used by the client.
+Broadly, we require three sets of components: Java-based clients that depend on third-party libraries; the versions of the libraries declared as dependencies by these clients (``current'' versions); and the latest available versions of those same libraries (``latest'' versions). For each client-library pair, we also need to extract the set of unchecked exceptions thrown by the library methods actually used by the client.
 
-To obtain this information, our methodology involves carrying out several key steps on our dataset: identifying suitable Java clients, extracting their library dependencies, resolving both the current and latest versions of the libraries, analyzing exception behaviour in both versions, and recording all methods that introduce newly added unchecked exceptions. These steps enable our tool, UnCheckGuard, to report client call sites that may be affected by behavioural breaking changes in a library upgrade.
+To collect data that our UnCheckGuard tool will use, we carry out the following steps: identifying suitable Java clients; extracting their library dependencies; resolving both the current and latest versions of the libraries; analyzing exception behaviour in both versions; and recording all methods that introduce newly added unchecked exceptions. Using this data, UnCheckGuard can report client call sites that may be affected by behavioural breaking changes in a library upgrade.
 
 \subsection{Collecting Clients}
 
-To begin our analysis, we first collected suitable client projects. We used the DUETS dataset~\cite{durieux21:_duets}, which provides a curated list of Java-based clients hosted on GitHub, each with at least five stars. We attempted to download each client repository and discarded any client that failed to download.
+To begin our analysis, we first collected suitable client projects\todo{you said that there was a huge number of clients in DUETS. Presumably more than the number we have are 5-starred. Need to say something about how we selected a subset to analyze, even if it's a convenience sample.}. We used the DUETS dataset~\cite{durieux21:_duets}, which provides a curated list of Java-based clients hosted on GitHub, each with at least five stars. We attempted to download each client repository and discarded any client that failed to download.
 
 Next, we checked whether the project included a \texttt{pom.xml} file, which indicates that it is a Maven-based project. This step was essential, as our analysis depends on running Maven commands. We compiled each client to produce a JAR file and kept only those clients that compiled successfully for further analysis.
 
@@ -20,16 +20,17 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.18.0:use-latest-versions
 \end{lstlisting}
 This command updates the \texttt{pom.xml} file with the most recent versions of all declared dependencies. We then re-run \texttt{mvn dependency:copy-dependencies} to download the updated set of libraries.
 
-This process yields both the original and the upgraded versions of each library used by the client, enabling us to perform a comparative analysis of behavioural changes across library versions.
+This process yields both the current and the latest versions of each library used by the client, enabling us to perform a comparative analysis of behavioural changes across library versions.
+\todo{similarly: a client presumably has many libraries that it depends on; are we using the library that DUETS pairs with the client? We should say so.}
 
 \subsection{Method and Exception Extraction}
 
-We analyze the JAR file of the client application using SootUp to extract all external method invocations performed by the client (by external, we mean to methods outside the client). Based on this set of method calls, we analyze both the currently used version of the library and its latest available version.
+We analyze the JAR file of the client application using SootUp~\cite{Karakaya24:_sootup} to extract all external method invocations performed by the client (by external, we mean to methods outside the client). Based on this set of method calls, we analyze both the version of the library that the client currently uses as well as its latest available version.
 
 To support this comparison, we also extract the list of methods present in the current version of the library. This allows us to match each external method call made by the client to its corresponding definition in the library. Using this information, we generate a JSON file that contains only the subset of library methods actually used by the client. This filtered list reduces the work necessary in subsequent steps.
 
 \subsection{Comparing Library Versions}
 
-Our tool detects newly added unchecked exceptions using static analysis and approximates their reachability using taint analysis. After collecting the unchecked exceptions from both the current and the latest versions of the library, we compare the sets of exceptions associated with each method in the library. We remove any duplicate exceptions that appear in both versions. If a method in the latest version throws an exception that was not present in the older version, we tag that method as having a newly added unchecked exception. Note that our methodology does not detect instances where the same exception is thrown by a method, but under new circumstances.
+Our tool detects newly added unchecked exceptions by scanning method implementations, and approximates their reachability from the client using taint analysis. After collecting the unchecked exceptions from both the current and the latest versions of the library, we compare the sets of exceptions associated with each method in the library. We remove any duplicate exceptions that appear in both versions. If a method in the latest version throws an exception that was not present in the older version, we tag that method as having a newly added unchecked exception. Note that our methodology does not detect instances where the same exception is thrown by a method, but under new circumstances.
 
 Using the previously generated mapping between client call sites and library methods, we create a JSON file that lists each client method along with the corresponding external method call that triggers a newly added unchecked exception transitively reachable in the library. This output enables our tool to highlight call sites in the client application that may exhibit behavioural breaking changes, helping developers assess the impact of upgrading their dependencies.
