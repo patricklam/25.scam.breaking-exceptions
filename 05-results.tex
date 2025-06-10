@@ -12,21 +12,21 @@ and under what circumstances do such exceptions occur (e.g. major/minor/patch ve
 
 
 Further, we also discuss the 
-\todo{There is a funnel from newly-added exceptions to exceptions called by the client to exceptions called by the client where the client can exploit the new exception to exceptions where we have a test case. It could go here.}
+\todo{Funnel}
 
 \subsection{Newly-added Unchecked Exceptions in Java Libraries}
 
-Our evaluation included 36 client applications, which depended on 68 distinct libraries. Across these, we formed 98 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. Some of the libraries were used by multiple clients.
+Our evaluation included 36 client applications, which depended on 69 distinct libraries. Across these, we formed 99 client-library pairs, each corresponding to a combination of a specific client and one of the libraries that it depends on. Some of the libraries were used by multiple clients.
 
 
 
-UnCheckGuard detected 142 callsites across these 98 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 14 callsites in total—spanning 8 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception. \todo{how many did we write test cases for? - 6, 3 trigger the exception and 3 fails to do it because of safety checks/harcoded values}
+UnCheckGuard detected 268 callsites across these 99 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 49 callsites in total—spanning 9 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 
-Notably, 6 out of these 8 libraries introduced such changes as part of a major version bump, which often signals breaking changes. However, we also observed one case each in a minor and a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
+Notably, 7 out of these 8 libraries introduced such changes as part of a major version bump, which often signals breaking changes. However, we also observed one case in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. Out of 98 client-library pairs, we identified 14 callsites affected by newly added unchecked exceptions across 8 libraries (8\%). These changes occurred in major version upgrades (6 times) but also in minor (1) and even patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. Out of 99 client-library pairs, we identified 49 callsites affected by newly added unchecked exceptions across 8 libraries (8 out of 69 distinct libraries). These changes occurred in major version upgrades (7 times) but also in patch (1) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
@@ -38,8 +38,8 @@ Notably, 6 out of these 8 libraries introduced such changes as part of a major v
 \toprule
 \textbf{Version Type} & \textbf{Libraries} & \textbf{Affected Call Sites} \\
 \midrule
-Major Version Change & 6 & 11 \\
-Minor Version Change & 1 & 2 \\
+Major Version Change & 7 & 48 \\
+Minor Version Change & 0 & 0 \\
 Patch Version Change & 1 & 1 \\
 \bottomrule
 \end{tabular}
@@ -85,38 +85,30 @@ enrichment-patterns-1.0-SNAPSHOT & beam-sdks-java-core-2.9.0 & beam-sdks-java-co
 
 
 
-
-\subsection{Effectiveness of Taint Analysis}
-
-We apply taint analysis in our tool to help filter out irrelevant answers. When we run our tool based only on an RTA-based call graph, which
+\subsection{We Write Manual Test Cases}
+We apply taint analysis in our tool to help filter out irrelevant answers. When we run our tool based only on a CHA-based call graph, which
 searches for unchecked exceptions in the transitively called method bodies as well as in the entry method's body, we get
-142 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
+268 callsites that potentially might have an unchecked exception that can cause a behavioural breaking change.
 
-We initially tried to write test cases for those 142 cases but were often unable to write a test case that could trigger
+We initially tried to write test cases for those 268 cases but were often unable to write a test case that could trigger
 the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 
-As with the \texttt{protobuf} case in Section~\ref{sec:methodology} which added a new-but-untriggerable unchecked exception, taint analysis played a crucial role in reducing the number of false positives.
+As with the \texttt{protobuf} case in Section~\ref{sec:methodology}, which added a new-but-untriggerable unchecked exception, taint analysis played a crucial role in reducing the number of false positives.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-By adding taint analysis, we reduced the number of potentially affected callsites from 142 to just 14.
+By adding taint analysis, we reduced the number of potentially affected callsites from 268 to just 49.
 \end{tcolorbox}
 \vspace{1em}
 
-\subsection{Impact on Clients}
+To assess the real-world consequences of these remaining 49 callsites, we manually constructed test cases. In most cases, we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
 
-\todo{I think subsection B and C could be one subsection, or else we move the first paragraph up to B, and C is the ``we write manual test cases''.}
-UnCheckGuard not only identifies newly added exceptions but also helps assess their practical consequences for clients. In total, across all client-library pairs, we observed 8047 external method invocations. Among these, 142 invoked library methods throw a new unchecked exception in the upgraded version. After applying reachability filtering, we retained 14 of these callsites as invoking methods with potential behavioural breaking changes. 
-
-To further evaluate the real-world impact of these changes, we attempted to construct test cases that could trigger the exception at runtime. In most of these cases\todo{how many? should be in the results table}, we successfully created such test inputs, confirming that the exception could propagate to the client. This validates that these changes are not merely theoretical but represent concrete runtime risks.
-
-In a few instances, our analysis identified callsites where the client code either passed a hardcoded value or included precondition checks (e.g., null checks) that prevented the exception from being triggered under current conditions. While these cases did not result in immediate runtime failures, they remain important for developers to monitor. Future code changes—for instance, removing a check, or altering the passed argument—could unknowingly expose these callsites to the newly added exception, leading to a breaking change.
-\todo{we should make data available including the cases - pending}
+In other cases, the exception was not triggered immediately because the client passed hardcoded values or had safeguards like null checks. While these do not cause immediate failures, they remain latent risks—future code changes could inadvertently expose the client to the newly added exceptions.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 14 such callsites across our corpus. We were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
+\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. We confirmed 49 such callsites across our corpus. We were able to construct test cases that trigger the exception. In others, the exception was guarded by a hardcoded value or a conditional check, but these callsites remain latent risks that could become active under future client code modifications.
 \end{tcolorbox}
 \vspace{1em}
 
