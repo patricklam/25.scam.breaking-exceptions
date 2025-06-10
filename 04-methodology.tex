@@ -41,7 +41,7 @@ After building the RTA-based call graph, we traverse the entire callgraph and co
 
 Once we collect the list of unchecked exceptions, we need to determine which of them can actually be triggered by client inputs. This is necessary because many exceptions that show up during call graph analysis are not reachable in practice—they rely on internal values rather than any parameters the client supplies. To filter out such cases, we use FlowDroid~\cite{Arzt14:_flowdroid}, a static taint analysis framework.
 
-Consider the following case drawn from our corpus. The client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{copyFromUtf8(String)} from the library \texttt{protobuf-java-2.6.1}. When this library is upgraded to \texttt{protobuf-java-4.30.1}, the method's implementation adds a new unchecked exception—an \texttt{IllegalArgumentException}. Our tool initially flags this as a behavioural breaking change because the exception is present in the latest version and not in the current one, and because there is a interproceddural control-flow path from the client method to the callsite where the exception is thrown.
+Consider the following case drawn from our corpus. The client \texttt{4ntoine/ServiceDiscovery-java}\footnote{\url{https://github.com/4ntoine/ServiceDiscovery-java}} uses the method \texttt{copyFromUtf8(String)} from the library \texttt{protobuf-java-2.6.1}. When this library is upgraded to \texttt{protobuf-java-4.30.1}, the method's implementation adds a new unchecked exception—an \texttt{IllegalArgumentException}. Our tool initially flags this as a behavioural breaking change because the exception is present in the latest version and not in the current one, and because there is a interprocedural control-flow path from the client method to the callsite where the exception is thrown.
 
 However, a closer inspection shows that this exception cannot be triggered by any value passed from the client. The method that throws the exception looks like this:
 
@@ -67,35 +67,36 @@ static CodedInputStream newInstance(
 }
 \end{lstlisting}
 
-In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Our taint analysis confirms that no user-supplied value (source) flows into the \texttt{IllegalArgumentException} (sink)\todo{we should talk about specifically what is the correct sink: is it the len used in pushLimit or is it the exception instantiation?}, nor does it taint the variable \texttt{len}. This shows the importance of having taint analysis to verify whether the exception can actually cause a behavioural breaking change in the client.
+In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method by initially calling methods that are part of \texttt{protobuf}'s API. Our taint analysis confirms that no user-supplied value (source) flows from the client into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the exception can actually cause a behavioural breaking change in the client.
 
-To enable taint analysis, we automatically generate a \textit{driver stub} for each library method used by the client. We generate this stub because, to our knowledge, FlowDroid does not allow marking method parameters directly as sources. Instead, we wrap each parameter in a synthetic method whose return value is marked as a source. This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
-\begin{itemize}
-  \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
-  \item Static and instance methods
-  \item Void and non-void return types
-  \item Primitive parameters (e.g., \texttt{int} $\rightarrow$ \texttt{0})
-  \item Object parameters (defaulted to \texttt{null})
-  \item Nested classes (converting \texttt{\$} to \texttt{.})
-  \item Multiple parameters (sources named \texttt{SourceN()}, where $N$ is the parameter index)
-  \item Overloaded methods (only one version retained)
-\end{itemize}
+For technical FlowDroid-related reasons, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. To our knowledge, FlowDroid does not allow marking method parameters directly as sources. Instead, we wrap each parameter in a synthetic method whose return value is marked as a source.
 
-An example of a driver stub follows.
-\begin{lstlisting}[language=Java,breaklines=true,breakatwhitespace=false,basicstyle=\scriptsize\ttfamily]
-public class DriverStub {
+%% This approach allows us to simulate tainted inputs and track their flow through the library method. Stub generation, implemented using SootUp, handles a variety of cases, including:
+%% \begin{itemize}
+%%   \item Constructor methods (\texttt{<init>} using \texttt{new ClassName(...)})
+%%   \item Static and instance methods
+%%   \item Void and non-void return types
+%%   \item Primitive parameters (e.g., \texttt{int} $\rightarrow$ \texttt{0})
+%%   \item Object parameters (defaulted to \texttt{null})
+%%   \item Nested classes (converting \texttt{\$} to \texttt{.})
+%%   \item Multiple parameters (sources named \texttt{SourceN()}, where $N$ is the parameter index)
+%%   \item Overloaded methods (only one version retained)
+%% \end{itemize}
 
-    public static java.lang.String source0() {
-        return null;
-    }
+%% An example of a driver stub follows.
+%% \begin{lstlisting}[language=Java,breaklines=true,breakatwhitespace=false,basicstyle=\scriptsize\ttfamily]
+%% public class DriverStub {
+%%     public static java.lang.String source0() {
+%%         return null;
+%%     }
 
-    public static void run() {
-        int result = new com.alibaba.fastjson.JSONObject().getIntValue(source0());
-    }
-}
-\end{lstlisting}
+%%     public static void run() {
+%%         int result = new com.alibaba.fastjson.JSONObject().getIntValue(source0());
+%%     }
+%% }
+%% \end{lstlisting}
 
-In the above example of the driver stub, we generate a stub for the public \texttt{getIntValue(String)}\footnote{Fully-qualified name: method \texttt{getIntValue(String)} returning a \texttt{int} on class \texttt{com.alibaba.fastjson.JSONObject}} method, which belongs to the library \texttt{fastjson-1.2.58}. It has a method parameter of type \texttt{java.lang.String}, which we declare as a method named \texttt{source0} in the driver stub. We declare the method \texttt{source0} to be a source, as FlowDroid marks its return value as a source. We generate the way \texttt{getIntValue} is called based on the type of method it is, and obtain the properties of the method using SootUp.
+%% In the above example of the driver stub, we generate a stub for library \texttt{fastjson-1.2.58}'s public \texttt{getIntValue(String)} method\footnote{Fully-qualified name: method \texttt{getIntValue(String)}, returning a \texttt{int} on class \texttt{com.alibaba.fastjson.JSONObject}}. This method has a \texttt{java.lang.String} parameter. We therefore declare a method named \texttt{source0} in the driver stub, and declare that method to be a source; FlowDroid then marks its return value as a source. We generate the way \texttt{getIntValue} is called based on the type of method it is, and obtain the properties of the method using SootUp.
 
 We treat each exception discovered in the RTA phase as a \textit{taint sink}. For this analysis, we intentionally construct the call graph using Class Hierarchy Analysis (CHA). Although CHA is less precise than RTA, it offers conservative coverage, reducing the risk of missing true positive flows due to aggressive pruning.
 
