@@ -213,7 +213,7 @@ LiteralByteString(byte[] bytes) {
 }
 \end{lstlisting}
 
-Although the latest version introduces a new unchecked exception, the client has already placed a guard condition which was the first line above:
+Although the latest version introduces a new unchecked exception, the client had already placed a guard condition, which was the first line above:
 
 \begin{lstlisting}[language=Java, basicstyle=\ttfamily]
   if (serviceInfo.getPayload() != null)

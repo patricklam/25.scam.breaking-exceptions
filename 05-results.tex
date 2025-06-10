@@ -124,7 +124,7 @@ By adding taint analysis, we reduced the number of potentially affected callsite
 \end{tcolorbox}
 \vspace{1em}
 
-To assess the real-world consequences of these remaining 49 callsites, we manually constructed test cases. In most cases, we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
+To assess the real-world consequences of these remaining 49 callsites, we manually constructed test cases. For 3 of the sites, we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
 
 In other cases, the exception was not triggered immediately because the client passed hardcoded values or had safeguards like null checks. While these do not cause immediate failures, they remain latent risks—future code changes could inadvertently expose the client to the newly added exceptions.
 
