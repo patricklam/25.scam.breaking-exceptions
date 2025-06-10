@@ -1,15 +1,16 @@
 We continue with a motivating example drawn from the DUETS collection~\cite{durieux21:_duets}
 of client/library pairs. 
-In our example,
-a revision of the \texttt{httpcore} library\footnote{https://hc.apache.org/index.html} adds a check for an
-error condition.  If the condition evaluates to true, the library method will
-explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{github.com/a63881763/HttpAsyncClientUtils}},
-calls the relevant part of the library, and thus may be affected by the new exception.
 
-In the DUETS suite, our client, \texttt{HttpAsyncClientUtils}, declares a dependency on
-version 4.4.6 of the \texttt{httpcore} library. Between the release of DUETS and today, the \texttt{httpcore} developers
+We start with our client, \texttt{HttpAsyncClientUtils}, which belongs to the DUETS suite. This client declares a dependency on
+version 4.4.6 of the \texttt{httpcore} library\footnote{https://hc.apache.org/index.html}. Since the release of the version of \texttt{HttpAsyncClientUtils} that we are using, the \texttt{httpcore} developers
 have released a number of new versions, and at the time of writing, the latest version of \texttt{httpcore}
 is 4.4.16\footnote{While \texttt{httpcore} 5.2.4 is in fact the latest version of this library, the library developers have released \texttt{httpcore5} as a distinct Maven component from \texttt{httpcore4}, and labelled \texttt{httpcore}(4) as end-of-life.}.
+
+A revision of the \texttt{httpcore} library between 4.4.6 and 4.4.16 adds a check for an
+error condition.  If the condition evaluates to true, the library method will
+explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{github.com/a63881763/HttpAsyncClientUtils}},
+calls the relevant part of the library, and thus may be affected by the new exception. We explain how UnCheckGuard finds this exception (and how it avoids some false positives).
+
 
 \paragraph{Library} All constructors for the \texttt{org.apache.http.HttpHost} class transitively call
 the static method \texttt{Args.containsNoBlanks()}. Between version 4.4.6 and version 4.4.16, the \texttt{httpcore}
@@ -57,9 +58,9 @@ Thus, calling \texttt{createAsyncClient(true)} triggers an exception when execut
 
 To detect that our \texttt{HttpAsyncClientUtils} client calls a method from \texttt{httpcore-4.4.6} which, upon upgrading to \texttt{httpcore-4.4.16}, may throw a new unchecked exception, UnCheckGuard begins by identifying all external library methods invoked anywhere in the client. It then analyzes both the current and the latest versions of the library to determine whether any newly introduced unchecked exceptions are reachable from the client's code. Here, reachability means that the client can trigger the exception in the library on some execution of the program, using values it passes to the library as parameters.
 
-To check if the client-supplied values can reach the exception-throwing site, we use taint analysis, as implemented using FlowDroid~\cite{Arzt14:_flowdroid}. Taint analysis is essential in this scenario because the existence of a control-flow path from the client callsite to an exception-throwing statement is not sufficient to conclude that the exception is actually triggerable by the client. We found that many such paths may exist in a library, but the path conditions leading to the exception might depend entirely on internal library values, rather than on client-supplied inputs; it is impossible for our client to cause the execution of any path that triggers the exception. We found that taint analysis can help distinguish actual behavioural breaking changes from false positives.
+To check if the client-supplied values can reach the exception-throwing site, we use taint analysis, as implemented using FlowDroid~\cite{Arzt14:_flowdroid}. Taint analysis is essential in this scenario because the existence of a control-flow path from the client callsite to an exception-throwing statement is not sufficient to conclude that the exception is actually triggerable by the client. We found that many such paths may exist in a library, but the path conditions leading to the exception might depend entirely on internal library values, rather than on client-supplied inputs; it is impossible for our client to cause the execution of any path that triggers the exception. In our experience, taint analysis can help distinguish actual behavioural breaking changes from false positives.
 
-Specifically, we use taint analysis to track whether any client-supplied method parameters (source) can propagate to the exception object's constructor (sink). If taint analysis determines that no client-supplied input flows into the exception-triggering logic, then we can conclude that the newly added exception will not cause a behavioural breaking change, and we do not report that exception.
+Specifically, we use taint analysis to track whether any client-supplied method parameters to library calls (source) can propagate to the exception object's constructor (sink). If taint analysis determines that no client-supplied input flows into the exception-triggering logic, then we can conclude that the newly added exception will not cause a behavioural breaking change, and we do not report that exception.
 %For exceptions that we report, we know that a path exists in the interprocedural control-flow graph (which one can compute with CHA) from the client method to the statement throwing the exception in the library.
 
 In version 4.4.6, UnCheckGuard finds two sites throwing \texttt{IllegalArgumentException}, while in 4.4.16, it detects three—each of which the client can potentially trigger using the values it chooses to pass to the library as parameters.

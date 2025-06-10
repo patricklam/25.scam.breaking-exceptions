@@ -17,7 +17,7 @@ However, upgrading libraries is not painless~\cite{elizalde18:_towar_smoot_libra
 versions of libraries may include breaking Application Programming
 Interface (API) changes~\cite{dietrich14:_broken}, requiring developers to verify that their own client
 code continues working with the new library versions. This is
-inconvenient at best and can require nontrivial amounts software development at worst,
+inconvenient at best and can require nontrivial amounts of software development at worst,
 often without the reward of useful new features for the client software---reacting to upgrades
 just allows the client software to continue working, in a hopefully less-vulnerable
 state.
@@ -27,13 +27,13 @@ checkers (including japicmp\footnote{https://github.com/siom79/japicmp} and Reva
 can verify the absence of syntactic breaking changes in libraries,
 e.g. changes to signatures of public methods, retractions of
 formerly-existing methods, or even syntactic changes to library method
-implementations. The situation is worse for semantic breaking changes:
+implementations. The situation is worse for semantic/behavioural breaking changes:
 there do not exist techniques for reliably detecting such changes. Of
 course, in its full generality, the problem is undecidable, though
 breaking change detection could be estimated using static and dynamic program analysis
 techniques.
 
-In this work, we contribute a novel way to detect one type of potentially breaking
+In this work, we contribute a novel way to detect one type of behavioural breaking
 change in a library. Our work enables client developers to inspect relevant changes
 to the set of exceptions that may be thrown by a Java library, particularly
 by the APIs that are actually used by specific client code. A new exception thrown by a library
@@ -61,9 +61,9 @@ and under what circumstances do such exceptions occur (e.g. major/minor/patch ve
 
 In our corpus of 69 distinct libraries, we found 24 libraries with newly-added exceptions, including exceptions that are added in non-major releases.
 We then investigated 99 client-library pairs to explore the prevalence of potentially breaking behavioural changes.
-We found that new potentially client-relevant unchecked exceptions occured in 8 of the 69 libraries, and that clients called methods containing these exceptions at 49 client callsites.
+We found that new potentially client-relevant unchecked exceptions occured in 8 of the 69 libraries, and that clients called methods reaching these exceptions at 49 client callsites.
 This shows that client applications do in fact call library methods that throw these new exceptions.
-Furthermore, we demonstrated that it is possible to trigger these exceptions by writing test cases using client code.
+Furthermore, we demonstrated that it is possible to trigger these exceptions by writing test cases using methods from the client.
 
 The contributions of this work are as follows:
 
@@ -73,8 +73,8 @@ The contributions of this work are as follows:
 \item We evaluate 99 client-library pairs from the DUETS dataset~\cite{durieux21:_duets} using \textit{UnCheckGuard}, identifying 49 call sites where libraries' newly added unchecked exceptions could cause behavioural breaking changes in clients, and write test cases showing that the exceptions can be triggered from client code.
 \end{itemize}
 
-\paragraph{Data Availability Statement}
-We will release the UnCheckGuard tool under an open‐source license and share our dataset on Zenodo immediately upon paper acceptance.
+\noindent \textit{Data Availability Statement.}
+We will release the UnCheckGuard tool under an open‐source license and share our dataset on Zenodo upon paper acceptance.
 
 
 %RQ1: Do libraries have breaking changes in the form of added exceptions?
