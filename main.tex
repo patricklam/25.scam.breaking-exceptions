@@ -70,8 +70,8 @@
     \begin{abstract}
       The ubiquitous use of third-party libraries in software development has enabled developers to quickly add
       new functionality to their client software. Unfortunately, library usage also carries a cost in
-      terms of software maintenance: library upgrades may include breaking changes, in which expectations
-      from the client about library behaviour are no longer met in new library versions. Behavioural breaking
+      terms of software maintenance: library upgrades may include breaking changes, in which client expectations
+      about library behaviour are no longer met in new library versions. Behavioural breaking
       changes can be particularly insidious, and in their full generality, could require sophisticated program
       analysis techniques to (approximately) detect.
 
@@ -80,7 +80,7 @@
       duet. On the library side, UnCheckGuard creates a list of new exceptions that may be thrown by methods
       in a library's public API, including by its transitive callees. On the client side, UnCheckGuard identifies
       client methods that call library methods with new exceptions. To reduce false positives, UnCheckGuard
-      additionally filters out client methods that cannot trigger these new exceptions. It therefore can be
+      additionally filters out client methods that cannot trigger these new exceptions, using taint analysis. It therefore can be
       used by client developers as a tool to screen library updates for relevant incompatibilities.
 
       We have evaluated UnCheckGuard on 69 libraries and 99 library-client pairs drawn from the DUETS collection
