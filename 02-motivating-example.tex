@@ -8,7 +8,7 @@ is 4.4.16\footnote{While \texttt{httpcore} 5.2.4 is in fact the latest version o
 
 A revision of the \texttt{httpcore} library between 4.4.6 and 4.4.16 adds a check for an
 error condition.  If the condition evaluates to true, the library method will
-explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{github.com/a63881763/HttpAsyncClientUtils}},
+explicitly throw an \texttt{IllegalArgumentException}. The client, \texttt{HttpAsyncClientUtils}\footnote{\url{https://github.com/iiweniiang/HttpAsyncClientUtils}},
 calls the relevant part of the library, and thus may be affected by the new exception. We explain how UnCheckGuard finds this exception (and how it avoids some false positives).
 
 
