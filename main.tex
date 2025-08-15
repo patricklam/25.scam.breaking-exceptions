@@ -94,8 +94,8 @@
       additionally filters out new exceptions that cannot be triggered by particular clients, using taint analysis. It therefore can be
       used by client developers as a tool to screen library updates for relevant incompatibilities.
 
-      We have evaluated UnCheckGuard on 69 libraries and 99 library-client pairs drawn from the DUETS collection
-      and found 8 libraries with newly-added exceptions, as well as 49 callsites to library methods which,
+      We have evaluated UnCheckGuard on 302 libraries and 352 library-client pairs drawn from the DUETS collection
+      and found 120 libraries with newly-added exceptions, as well as 1708 callsites to library methods which,
       when upgraded to the latest version, may introduce
       a behavioural breaking change in the client due to a newly added unchecked exception. These findings
       highlight the practical value of UnCheckGuard in identifying exception-related incompatibilities
