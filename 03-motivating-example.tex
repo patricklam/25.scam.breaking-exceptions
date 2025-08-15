@@ -40,16 +40,24 @@ our \texttt{HttpAsyncClientUtils} client has reachable code from its public \tex
 that creates an \texttt{HttpHost} with an empty \texttt{host}. This
 method takes a \texttt{proxy}
 parameter and contains the following code:
-\begin{lstlisting}[language=Java,basicstyle=\scriptsize\ttfamily]
- if (proxy) {
+\begin{lstlisting}[style=javacode]
+if (proxy) {
   return HttpAsyncClients.custom()
    .setConnectionManager(conMgr)
    .setDefaultCredentialsProvider(credentialsProvider)
    .setDefaultAuthSchemeRegistry(authSchemeRegistry)
-   .setProxy(new HttpHost(host, port))
+(*@\Highlight{   .setProxy(new HttpHost(host, port))}@*)
    .setDefaultCookieStore(new BasicCookieStore())
    .setDefaultRequestConfig(requestConfig).build();
- } else {
+} else {
+  // ...
+}
+\end{lstlisting}
+
+The \texttt{HttpAsyncClientUtils} client declares the two variables (host and port) required for \texttt{HttpHost} in the following way:
+\begin{lstlisting}[language=Java,basicstyle=\scriptsize\ttfamily]
+    private String host = "";
+    private int port = 0;
    // ...
 \end{lstlisting}
 where \texttt{host} is a private field initialized to the empty string.

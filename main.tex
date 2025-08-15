@@ -42,6 +42,17 @@
 \usepackage{makecell}
 \usepackage[most]{tcolorbox}
 
+\definecolor{lightyellow}{rgb}{1.0, 0.95, 0.8}
+
+\newcommand{\Highlight}[1]{%
+  \colorbox{lightyellow}{\parbox{\linewidth}{#1}}}
+
+\lstdefinestyle{javacode}{
+    language=Java,
+    basicstyle=\scriptsize\ttfamily,
+    numbers=none,
+    escapeinside={(*@}{@*)}
+}
 \newtcolorbox{findingbox}[1][]{
   colback=gray!10!white,
   colframe=gray!50!black,
