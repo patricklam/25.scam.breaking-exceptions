@@ -1,7 +1,7 @@
-The previous section, Section~\ref{sec:data-collection}, described how we collected the clients and libraries, as well as the necessary information to perform our analysis.
+The previous section, Section~\ref{sec:data-collection}, described how we collected the clients.
 In this section, we describe our methodology for detecting and verifying newly added unchecked exceptions in a library when it is updated from an older version to a newer one. Our focus is on identifying the impact of such changes on client code. Specifically, we analyze client programs to detect usage of library methods that were updated to throw previously non-existent unchecked exceptions. Java distinguishes between checked exceptions, which appear as part of method signatures, and unchecked exceptions, which do not. Unchecked exceptions may therefore introduce a class of breaking changes that method signature-based syntactic approaches for Java cannot detect.
 
-After carrying out the data collection steps in Section~\ref{sec:data-collection} and extracting all external library methods invoked by the client, we next analyze their implementations, in both the current version and the latest version. This allows us to compare their behaviour across versions. If we find, through our analysis, that a method now throws a newly added unchecked exception in the latest version, and that the exception can be triggered from the client code, we flag a potential behavioural breaking change. To verify whether this change is in fact breaking, we currently manually write test cases to verify that the client may be affected by the newly introduced exception. We found that this was easy to do given the information that UnCheckGuard reports.
+After carrying out the data collection steps in Section~\ref{sec:data-collection} and collecting all the clients that have to be analyzed, we next analyze all the external method calls made by the client, in both the current version and the latest version. This allows us to compare their behaviour across versions. If we find, through our analysis, that a method now throws a newly added unchecked exception in the latest version, and that the exception can be triggered from the client code, we flag a potential behavioural breaking change. To verify whether this change is in fact breaking, we currently manually write test cases to verify that the client may be affected by the newly introduced exception. We found that this was easy to do given the information that UnCheckGuard reports.
 
 \subsection{Analysis Setup}
 
@@ -12,13 +12,27 @@ After carrying out the data collection steps in Section~\ref{sec:data-collection
     \label{fig:jsonjava}
 \end{figure*}
 
-The analysis setup is divided into two main phases: client selection and knowledge extraction for analysis. Figure~\ref{fig:jsonjava} shows an overview of the full pipeline.
+We divide the analysis setup into the following steps: collecting the current and latest library versions, and mapping external method invocations to library methods. Figure~\ref{fig:jsonjava} shows an overview of the full pipeline.
 
 As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
-After selecting the valid clients and compiling them into JAR files, we proceed to extract relevant method-level knowledge from both the client and the current version of the libraries it depends on.
+After selecting the valid clients and compiling them into JAR files, we collect the current and latest versions of the libraries on which the client depends.
 
-We use SootUp~\cite{Karakaya24:_sootup} to analyze the client JAR and identify all external method invocations. UnCheckGuard performs this analysis by traversing the Jimple intermediate representation of each client method and checking whether any statement contains an \texttt{InvokeExpr}, which represents a method invocation. For each invocation, we retrieve the declaring class type of the target method. We then check whether this class type is part of the client’s SootUp view---essentially, whether it was declared in the client JAR file or the Java standard library. If the class type is not found in the view, we mark the method as external. This process allows us to filter out internal method calls and consider only invocations to external library methods.
+\subsubsection{Library Version Resolution}
+
+Our tool relies on analyzing both the version of the library currently used by the client and the latest available version (as stored in the Maven Central Repository). To collect the current version, we run the Maven command \texttt{mvn dependency:copy-dependencies}, which downloads all the dependencies declared in the client's build configuration.
+
+To obtain the latest versions of these dependencies, we run the following Maven command:
+\begin{lstlisting}[language=bash, breaklines=true, basicstyle=\ttfamily\small]
+mvn org.codehaus.mojo:versions-maven-plugin:2.18.0:use-latest-versions
+\end{lstlisting}
+This command updates the \texttt{pom.xml} file with the most recent versions of all declared dependencies. We then re-run \texttt{mvn dependency:copy-dependencies} to download the updated set of libraries.
+
+After acquiring both the current and latest versions of the libraries on which the client depends, we extract all external method invocations made by the client.
+
+\subsubsection{Mapping External Method Invocations to Library Methods}
+
+We use SootUp~\cite{Karakaya24:_sootup} to analyze the client JAR and identify all external method invocations. By external methods, we mean methods that are not defined within the client’s own codebase—methods whose definitions reside in third-party libraries. UnCheckGuard performs this analysis by traversing the Jimple intermediate representation of each client method and checking whether any statement contains an \texttt{InvokeExpr}, which represents a method invocation. For each invocation, we retrieve the declaring class type of the target method. We then check whether this class type is part of the client’s SootUp view---essentially, whether it was declared in the client JAR file or the Java standard library. If the class type is not found in the view, we mark the method as external. This process allows us to filter out internal method calls and consider only invocations to external library methods.
 
 In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures. For the matching process, for simplicity, we perform an exact match between the declaring type of the method invoked by the client and that in the library to create a client/library mapping. This approach may miss some valid matches in the presence of dynamic dispatch---the declared receiver object type may differ from actual receiver object type that the client uses at the call site---so the current version of UnCheckGuard may underreport some breaking changes.
 
