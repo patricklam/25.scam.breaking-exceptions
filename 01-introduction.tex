@@ -42,7 +42,7 @@ to exhibit unexpected behaviour.
 
 Although developers tend to ignore even checked
 exceptions~\cite{nakshatri16:_analy_java}, we contend that incrementally informing
-developers only about relevant newly-added exceptions is likely to be more tractable, consistent with the
+developers only about relevant newly-added exceptions is more likely to result in developer action, consistent with the
 design principles of Google's Tricorder tool~\cite{sadowski15:_tricor}.
 Thus, we leverage taint analysis
 to reduce the number of irrelevant reports that we report to client developers.
@@ -53,11 +53,11 @@ We hope that our reports enable client developers to better understand how new e
 We explore the following research questions:
 
 \noindent
-{\bf RQ1.} Do published changes to Java libraries throw new unchecked exceptions in methods,
-and under what circumstances do such exceptions occur (e.g. major/minor/patch versions)?
+{\bf RQ1.} Do library clients call methods with new added exceptions, and is it possible for the clients to trigger these exceptions? Furthermore, is it possible to write client-focussed test cases that trigger the exceptions?
 
 \noindent
-{\bf RQ2.} Do library clients, in practice, call methods with new added exceptions, and is it possible for the clients to trigger these exceptions? Is it possible to write client test cases that trigger the exceptions?
+{\bf RQ2.} For library changes that introduce triggerable new unchecked exceptions, under what circumstances do such exceptions occur (i.e. major/minor/patch versions)?
+
 
 In our corpus of 302 distinct libraries, we found 120 libraries with newly-added exceptions, including exceptions that are added in non-major releases.
 We then investigated 352 client-library pairs to explore the prevalence of potentially breaking behavioural changes.
