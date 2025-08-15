@@ -1,0 +1,38 @@
+We define some concepts that underpin our approach to detecting
+behavioural breaking changes caused by newly added exceptions.
+
+\textbf{Taint Analysis}. Taint analysis is a static or dynamic program analysis technique.
+In taint analysis, sources (for example, client input) and sinks (for example, critical
+operations or exceptions) are declared, and then it tracks whether the sources can reach the sinks.
+
+The following example demonstrates how taint flows from a source to a sink:
+
+\begin{lstlisting}[language=java,basicstyle=\scriptsize\ttfamily]
+public class FlowDroidExampleCode {
+    public static String source() {
+        return "secret";
+    }
+
+    public void exampleTaintAnalysis() {
+        String temp = source();
+        String[] arr = new String[2];
+        arr[0] = temp;
+        arr[1] = "hello";
+        if (arr[0] == "secret") {
+            throw new RuntimeException("hello");
+        }
+    }
+}
+\end{lstlisting}
+
+In this example, the method \texttt{source()} acts as the taint source. The statement \texttt{throw new RuntimeException("hello")} is the sink. The tainted value flows into the array \texttt{arr}, and later influences the conditional that triggers the exception. Although the exception is hardcoded, the fact that its execution depends on a tainted value makes this a valid taint flow from the source to the sink.
+
+We apply taint analysis to detect whether newly added exceptions in a library are reachable from client-supplied values. This helps us detect behavioural breaking changes where a newly added unchecked exception is only triggered under specific conditions influenced by the client.
+
+\textbf{SootUp}. SootUp~\cite{Karakaya24:_sootup} is a lightweight, modern Java framework built on top of Soot~\cite{vallee2010soot} that supports static analysis of Java bytecode.
+
+SootUp transforms JVM bytecode into the intermediate representation Jimple, which simplifies analysis by converting low-level bytecode instructions into a higher-level format that captures method bodies, variable assignments, exception handling blocks, and method invocations. SootUp also provides call graph generation with various algorithms and precision levels. We use the call graph to trace the propagation of exceptions from libraries to clients. When a library method throws a new unchecked exception, we use SootUp to determine whether client methods transitively call that library method by traversing the call graph. We also use the intermediate representation to inspect methods that may throw an exception by examining throw statements and method calls within their bodies.
+
+\textbf{FlowDroid}. FlowDroid~\cite{Arzt14:_flowdroid} is a static taint analysis framework designed for Android applications. It tracks data flow from declared sources to sinks within the application's code. Developed by Arzt et al.~\cite{Arzt14:_flowdroid}, it is built on top of the Soot~\cite{vallee2010soot} static analysis framework. FlowDroid models the complete Android lifecycle and callback structure and enables flow-sensitive, field-sensitive, context-sensitive, and object-sensitive analysis.
+
+Even though FlowDroid primarily targets Android applications, it can still be used to perform taint analysis in general. It checks whether data from a source will taint a sink by computing possible paths along which the data can flow. In our tool, we utilize taint analysis to check the approximate reachability of newly added unchecked exceptions from client code.
