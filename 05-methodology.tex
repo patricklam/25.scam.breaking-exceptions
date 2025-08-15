@@ -87,6 +87,52 @@ static CodedInputStream newInstance(
 
 In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method through methods that are part of \texttt{protobuf}'s public API. Our taint analysis confirms that no client-supplied value (source) flows into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the newly-added exception can actually cause a behavioural breaking change in the client.
 
+We mark an exception site as \emph{reachable} if either the client-supplied value is used as an argument for the exception constructor or it influences the control flow that reaches the \texttt{throw} statement. This approach ensures that UnCheckGuard correctly identifies both explicit data dependence and implicit control-flow dependence on the client-supplied value.
+
+Figure~\ref{fig:taint-flow} illustrates the two ways in which client-supplied values can reach an exception site in our analysis: directly through constructor arguments (data flow) or indirectly by influencing the control flow that leads to the \texttt{throw} statement.
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.0cm and 1.2cm,
+  >=Latex,
+  box/.style={draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.9cm, inner sep=4pt},
+  legend/.style={draw, rounded corners, align=left, inner sep=3pt},
+  dataedge/.style={->, thick, shorten >=2pt, shorten <=2pt},
+  ctrledge/.style={->, dashed, thick, shorten >=2pt, shorten <=2pt}
+]
+\node[box] (client) {Client\\ \texttt{caller(a)}\\ \textbf{Source}};
+\node[box, right=of client] (call) {Call site\\ \texttt{lib.m(a)}};
+\node[box, right=of call] (lib) {Library\\ \texttt{m(x)\{...\}}};
+\node[box, below=1.0cm of lib, minimum width=3.2cm] (cond) {Branch\\ \texttt{if (g(x)) throw E(...)}};
+\node[box, right=1.1cm of lib, minimum width=3.3cm] (ctor) {Exception constructor\\ \texttt{new E(...)}\\ \textbf{Sink}};
+\node[box, right=of ctor, minimum width=2.0cm] (throw) {\texttt{throw e;}};
+
+\draw[dataedge] (client) -- node[above]{taint} (call);
+\draw[dataedge] (call) -- node[above]{\texttt{x := a}} (lib);
+\draw[dataedge] (lib)
+  to[out=12,in=168]
+  node[pos=0.55, above=4pt, sloped, fill=white, inner sep=1pt] {\texttt{msg := f(x)}}
+  (ctor);
+
+\draw[ctrledge] (lib) -- (cond);
+\draw[ctrledge] (cond) to[out=25,in=-155] (ctor);
+\draw[dataedge] (ctor) -- (throw);
+
+\node[legend, anchor=south east] (leg) at (current bounding box.south east) {\textbf{Legend:}\\[-2pt]
+\begin{tikzpicture}[baseline={(0,0)}]
+  \draw[->, thick] (0,0) -- (1.0,0) node[right, xshift=6] {data dep.};
+  \draw[->, dashed, thick] (0,-0.45) -- (1.0,-0.45) node[right, xshift=6] {control dep.};
+\end{tikzpicture}
+};
+\end{tikzpicture}%
+}
+\caption{Taint propagation from a client parameter (source) to an exception site (sink) occurs via either \emph{data dependence} (solid lines, e.g., a value passed into the exception constructor arguments) or \emph{control-flow dependence} (dashed lines, e.g., a value influencing a branch that leads to the \texttt{throw} statement).}
+\label{fig:taint-flow}
+\end{figure*}
+
+
 For technical reasons related to FlowDroid, we automatically generate a \textit{driver stub} for each value that the client supplies to the library. FlowDroid does not allow method parameters to be marked directly as taint sources. To work around this, we wrap each parameter in a synthetic method and mark its return value as a source.
 
 In our analysis, we mark the parameters of library methods that are invoked by the client as taint sources (in the example in Section~\ref{sec:motivating}, the \texttt{HttpHost} constructor parameters), since these are the only values under the client’s control. We also mark each exception identified in the Analysis Setup step as a potential taint sink. We use the taint analysis to estimate whether the client-supplied parameter values can trigger newly introduced exceptions. If they cannot, then the exception is effectively unreachable from the client, and thus does not constitute a behavioural breaking change. 
