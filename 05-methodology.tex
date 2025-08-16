@@ -244,7 +244,7 @@ There are thus at least two ways to fail in creating a test suite: (1) the clien
 
 The potential failure to write a test case is similar in spirit to, for instance, security tools which report a number of potential vulnerabilities; the onus remains on the tool user to go from a potential vulnerability to proof-of-concept code.
 
-Even in cases where no current client-based test case could possibly trigger the exception, the information produced by our tool remains useful for the client developer, as future code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception. The library developer ought to add a description of this exception, and the circumstances under which it could be thrown, to the library method's documentation.
+In cases where no current client-based test case could possibly trigger the exception, this is still a situation where future library code changes (e.g., modifying a hardcoded value or removing a check) could make the call site vulnerable to the newly introduced exception. Ideally, the library developer ought to have added a description of this exception, and the circumstances under which it could be thrown, to the library method's documentation, as we have seen in the unreachable \texttt{InvalidProtocolBufferException} above.
 
 We present an example of an untriggerable case which still passes the taint analysis. The client project \texttt{github.com/4ntoine/ServiceDiscovery-java} contains the following code:
 
