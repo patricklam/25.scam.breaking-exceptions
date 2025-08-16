@@ -32,7 +32,7 @@ Exceptions passing taint analysis & 1708 \\
 
 \subsection{Client Calls to Newly-added Exceptions}
 
-Our evaluation included 1011 client applications, which depended on 302 distinct libraries. Across these, we formed 352 client–library pairs in which the library had an available upgrade, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents some of our clients and libraries, the number of client callsites invoking methods in the library with newly-added exceptions, and the number of these callsites that pass the taint analysis reachability filter.
+Our evaluation includes 1011 client applications, which depend on 302 distinct libraries. Across these, we formed 352 client-library pairs in which the library had an available upgrade, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents some of our clients and libraries, the number of client callsites invoking methods in the library with newly-added exceptions, and the number of these callsites that pass the taint analysis reachability filter.
 
 UnCheckGuard detected 15678 callsites across these 352 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 1708 callsites in total—spanning 120 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 
@@ -79,7 +79,7 @@ Patch Version Change & 14 \\
 
 \begin{table*}[hbt!]
 \centering
-\caption{Clients, libraries, versions, and counts of callsites reaching newly-added exceptions}
+\caption{Selected clients, libraries, versions, and counts of callsites reaching newly-added exceptions}
 \label{tab:version-changes}
 \begin{tabular}{>{\raggedright\arraybackslash\hangindent=2em}p{3.5cm} >{\raggedright\arraybackslash\hangindent=2em}p{3.5cm} >{\raggedright\arraybackslash\hangindent=2em}p{3.5cm} >{\raggedleft\arraybackslash}p{2cm} >{\raggedleft\arraybackslash}p{2cm}}
 \toprule
