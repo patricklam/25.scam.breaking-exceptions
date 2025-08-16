@@ -1,7 +1,7 @@
 The previous section, Section~\ref{sec:data-collection}, described how we collected the clients.
 In this section, we describe our methodology for detecting and verifying newly added unchecked exceptions in a library when it is updated from an older version to a newer one. Our focus is on identifying the impact of such changes on client code. Specifically, we analyze client programs to detect usage of library methods that were updated to throw previously non-existent unchecked exceptions. Java distinguishes between checked exceptions, which appear as part of method signatures, and unchecked exceptions, which do not. Unchecked exceptions may therefore introduce a class of breaking changes that method signature-based syntactic approaches for Java cannot detect.
 
-After carrying out the data collection steps in Section~\ref{sec:data-collection} and collecting all the clients that have to be analyzed, we next analyze all the external method calls made by the client, in both the current version and the latest version. This allows us to compare their behaviour across versions. If we find, through our analysis, that a method now throws a newly added unchecked exception in the latest version, and that the exception can be triggered from the client code, we flag a potential behavioural breaking change. To verify whether this change is in fact breaking, we currently manually write test cases to verify that the client may be affected by the newly introduced exception. We found that this was easy to do given the information that UnCheckGuard reports.
+After carrying out the data collection steps in Section~\ref{sec:data-collection} and collecting all the clients that have to be analyzed, we next analyze all the external method calls made by the client, in both the current (pre-upgrade) version and the latest version. This allows us to compare their behaviour across versions. If we find, through our analysis, that a method now throws a newly added unchecked exception in the latest version, and that the exception can be triggered from the client code, we flag a potential behavioural breaking change. To verify whether this change is in fact breaking, we currently manually write test cases to verify that the client may be affected by the newly introduced exception. We found that this was easy to do given the information that UnCheckGuard reports.
 
 \subsection{Analysis Setup}
 
@@ -12,11 +12,11 @@ After carrying out the data collection steps in Section~\ref{sec:data-collection
     \label{fig:jsonjava}
 \end{figure*}
 
-We divide the analysis setup into two steps: 1) collecting the current and latest library versions, and 2) mapping external method invocations to library methods. Figure~\ref{fig:jsonjava} shows an overview of the full pipeline.
+We divide analysis setup into two steps: 1) library version resolution; and 2) mapping external method invocations to library methods. Figure~\ref{fig:jsonjava} shows the full pipeline.
 
 %As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
-After selecting clients and compiling them into JAR files, we collect the current and latest versions of the libraries on which the client depends.
+%After selecting clients and compiling them into JAR files, we collect the current and latest versions of the libraries on which the client depends.
 
 \subsubsection{Library Version Resolution}
 
@@ -28,13 +28,13 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.18.0:use-latest-versions
 \end{lstlisting}
 This command updates the \texttt{pom.xml} file with the most recent versions of all declared dependencies. We then re-run \texttt{mvn dependency:copy-dependencies} to download the updated set of libraries.
 
-After acquiring both the current and latest versions of the libraries on which the client depends, we extract all external method invocations made by the client.
+After acquiring relevant versions of the libraries on which the client depends, we extract all external method invocations made by the client.
 
 \subsubsection{Mapping External Method Invocations to Library Methods}
 
 We use SootUp~\cite{Karakaya24:_sootup} to analyze the client JAR and identify all external method invocations. By external methods, we mean methods that are not defined within the client’s own codebase—methods whose definitions reside in third-party libraries. UnCheckGuard performs this analysis by traversing the Jimple intermediate representation of each client method and checking whether any statement contains an \texttt{InvokeExpr}, which represents a method invocation. For each invocation, we retrieve the declaring class type of the target method. We then check whether this class type is part of the client’s SootUp view---essentially, whether it was declared in the client JAR file or the Java standard library. If the class type is not found in the view, we mark the method as external. This process allows us to filter out internal method calls and consider only invocations to external library methods.
 
-In parallel, we analyze the current (i.e., pre-upgrade) version of each library used by the client. Using SootUp, we extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library by comparing their fully qualified method signatures. For the matching process, for simplicity, we perform an exact match between the declaring type of the method invoked by the client and that in the library to create a client/library mapping. This approach may miss some valid matches in the presence of dynamic dispatch---the declared receiver object type may differ from actual receiver object type that the client uses at the call site---so the current version of UnCheckGuard may underreport some breaking changes.
+In parallel, we analyze the current version of each library used by the client. We extract all method signatures defined in the library JAR. We then match each external method call made by the client to the corresponding method in the library, by comparing their fully qualified method signatures. For the matching process, for simplicity, we perform an exact match between the declaring type of the method invoked by the client and that in the library to create a client/library mapping. This approach may miss some valid matches in the presence of dynamic dispatch---the declared receiver object type may differ from actual receiver object type that the client uses at the call site---so the current version of UnCheckGuard may underreport some breaking changes.
 
 Our client/library mapping identifies library methods and links them to where they can be invoked by the client. This mapping serves as a foundation for later stages in our analysis, where we detect behavioural changes in the latest versions of libraries and traces their potential impact on client call sites.
 
@@ -44,7 +44,7 @@ Our primary goal is to detect whether upgrading a library introduces new uncheck
 
 \subsubsection{Exception Discovery}
 
-To detect newly added unchecked exceptions in the latest library versions, we first construct a call graph using Class Hierarchy Analysis via SootUp~\cite{Karakaya24:_sootup}. CHA, working on the class hierarchy, includes all methods defined in subclasses and interface implementations regardless of whether they are actually invoked.
+To detect newly added unchecked exceptions in the latest library versions, we first construct a call graph using SootUp's Class Hierarchy Analysis implementation. CHA includes all methods with the correct signature defined in subclasses and interface implementations.
 
 %We use RTA instead of Class Hierarchy Analysis (CHA) because RTA provides a more precise approximation of runtime behaviour in the context of a particular client/library pair. RTA instead considers only those types that are instantiated in the program (client plus libraries), resulting in a more accurate call graph.
 
@@ -85,11 +85,10 @@ static CodedInputStream newInstance(
 }
 \end{lstlisting}
 
-In the comment written by the library developer, the developer states that this exception cannot be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method through methods that are part of \texttt{protobuf}'s public API. Our taint analysis confirms that no client-supplied value (source) flows into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the newly-added exception can actually cause a behavioural breaking change in the client.
+The library developer's comment states that this exception will never be thrown by this non-public method, essentially because \texttt{len} cannot be directly supplied by a client. Clients can only reach this \texttt{newInstance} method through methods that are part of \texttt{protobuf}'s public API. Our taint analysis confirms that no client-supplied value (source) flows into the \texttt{IllegalArgumentException} constructor (sink). We choose exception constructors as sinks because taintedness of the exception constructor means that the client-controlled value can affect the reachability of the exception, i.e. whether the exception might be thrown or not. Hence, taint analysis helps reason about whether the newly-added exception can actually cause a behavioural breaking change in the client.
 
-We mark an exception site as \emph{reachable} if either the client-supplied value is used as an argument for the exception constructor or it influences the control flow that reaches the \texttt{throw} statement. This approach ensures that UnCheckGuard correctly identifies both explicit data dependence and implicit control-flow dependence on the client-supplied value.
-
-Figure~\ref{fig:taint-flow} illustrates the two ways in which client-supplied values can reach an exception site in our analysis: directly through constructor arguments (data flow) or indirectly by influencing the control flow that leads to the \texttt{throw} statement.
+We mark an exception site as \emph{reachable} if either the client-supplied value is used as an argument for the exception constructor (explicit) or the client-supplied value influences the control flow reaching the \texttt{throw} statement (implicit). This approach ensures that we correctly identify both explicit data dependence and implicit control-flow dependence on the client-supplied value.
+Figure~\ref{fig:taint-flow} illustrates these two ways that client-supplied values can reach an exception site.
 
 \begin{figure*}[t]
 \centering
@@ -110,7 +109,7 @@ Figure~\ref{fig:taint-flow} illustrates the two ways in which client-supplied va
 \node[box, right=of ctor, minimum width=2.0cm] (throw) {\texttt{throw e;}};
 
 \draw[dataedge] (client) -- node[above]{taint} (call);
-\draw[dataedge] (call) -- node[above]{\texttt{x := a}} (lib);
+\draw[dataedge] (call) -- node[above]{\texttt{x:=a}} (lib);
 \draw[dataedge] (lib)
   to[out=12,in=168]
   node[pos=0.55, above=4pt, sloped, fill=white, inner sep=1pt] {\texttt{msg := f(x)}}
@@ -222,9 +221,9 @@ In this example, the parameter \texttt{input} is the taint source, and the \text
 
 %% This trade-off justifies the use of CHA in the filtering phase: although it may over-approximate in some cases, it ensures that no critical exception flows are missed.
 
-In terms of our methodology, for methods that appear in both the current and latest versions of the library, we compare the sets of unchecked exceptions that they throw that are deemed reachable by taint analysis, and identify new exceptions. (If a \emph{method} exists in the current library version but is missing from the latest version, we exclude it from our analysis. Its removal may indicate a method signature–based breaking change, but those are handled by existing tools and lie outside the scope of our detection. Our work only detects changes to the set of exceptions that are thrown.)
+In terms of our methodology, for methods that appear in both the current and latest versions of the library, we compare the sets of unchecked exceptions that they throw that are deemed reachable by taint analysis, and identify new exceptions. (If a \emph{method} exists in the current library version but is missing from the latest version, we exclude it from our analysis. Its removal may indicate a method signature-based breaking change, but those are handled by existing tools and lie outside the scope of our detection. Our work only detects changes to the set of exceptions that are thrown.)
 
-We compare exceptions using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains any additional unchecked exceptions, we classify it as a method with a newly added unchecked exception. Otherwise, we discard it from further consideration; our technique cannot find new exception-related behavioural breaking changes for this library method.
+We compare exceptions using both the exception type (e.g., \texttt{java.lang.IllegalArgumentException}) and the fully-qualified signature of the method in which the exception occurs. If, after removing all exceptions common to both versions, the method in the latest version still contains additional unchecked exceptions, we classify it as a method with a newly-added unchecked exception. Otherwise, we discard it from consideration; our technique sees no new exception-related behavioural breaking changes for this method.
 
 \subsection{Filtering Untriggerable Unchecked Exceptions}
 
@@ -249,37 +248,36 @@ Even in cases where no current client-based test case could possibly trigger the
 
 We present an example of an untriggerable case which still passes the taint analysis. The client project \texttt{github.com/4ntoine/ServiceDiscovery-java} contains the following code:
 
-\begin{lstlisting}[language=Java, basicstyle=\ttfamily, breaklines=true]
-if (serviceInfo.getPayload() != null)
- builder.setPayload(
-   ByteString.copyFrom(serviceInfo.getPayload()));
+\begin{lstlisting}[style=javacode]
+    if (serviceInfo.getPayload() != null)
+     builder.setPayload(
+       ByteString.copyFrom(serviceInfo.getPayload()));
 \end{lstlisting}
 
 In this case, the library method with the newly added unchecked exception is:
 
-\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
-com.google.protobuf.ByteString.copyFrom(
-  byte[])
+\begin{lstlisting}[style=javacode]
+    com.google.protobuf.ByteString.copyFrom(byte[])
 \end{lstlisting}
 
 The client uses version 2.6.1 of \texttt{protobuf-java}, while the latest version is 4.31.0. The newly added exception, \texttt{java.lang.NullPointerException}, is thrown in the latest library if a null value is passed to \texttt{copyFrom}. The relevant transitively-called code from the library is:
 
-\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
-LiteralByteString(byte[] bytes) {
-    if (bytes == null) {
-        throw new NullPointerException();
+\begin{lstlisting}[style=javacode]
+    LiteralByteString(byte[] bytes) {
+        if (bytes == null) {
+            throw new NullPointerException();
+        }
+        this.bytes = bytes;
     }
-    this.bytes = bytes;
-}
 \end{lstlisting}
 
 Although the latest version introduces a new unchecked exception, the client had already placed a guard condition, which was the first line above:
 
-\begin{lstlisting}[language=Java, basicstyle=\ttfamily]
+\begin{lstlisting}[style=javacode]
   if (serviceInfo.getPayload() != null)
 \end{lstlisting}
 
-The guard condition does prevent the exception from being triggered by calling client methods. Therefore, we cannot generate a client-centric test case for this call site. However, we still report it, and we have argued that it is potentially relevant. The reason that we report it is that we actually only analyze the clients to extract calls to the library, so that the client-side guard is not interesting to our analysis. Our taint analysis starts on the library side of the client/library interface.
+The guard condition does prevent the exception from being triggered by calling client methods. Therefore, we cannot generate a client-centric test case for this call site. However, we still report it, and we claim that it is potentially relevant. The reason that we report it is that we actually only analyze the clients to extract calls to the library, so that the client-side guard is not interesting to our analysis. Our taint analysis starts on the library side of the client/library interface.
 
 In contrast, for cases where the client does not enforce such conditions and passes input parameters that can trigger the new exception, our experience has shown that we can generate a test case to demonstrate the behavioural breaking change. In these situations, the change is not merely hypothetical—it represents an actual, runtime-breaking behaviour that occurs when the latest library is used. These tests offer actionable insights to developers by highlighting call sites could possibly trigger newly added exceptions in new library versions.
 
