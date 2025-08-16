@@ -35,7 +35,7 @@ Exceptions passing taint analysis & 1708 \\
 Our evaluation includes 1011 client applications, which depend on 302 distinct libraries. Across these, we formed 352 client-library pairs in which the library had an available upgrade, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents the top 15 client-library pairs, ordered in descending number of callsites that pass the taint analysis reachability filter; for each pair, it also presents the number of client callsites invoking library methods with newly-added exceptions.
 
 UnCheckGuard detected 15678 callsites across these 352 pairs where the upgraded version of the library could throw a new unchecked exception.
-We initially tried to write test cases for these callsites but found ourself all-too-often unable to write a test case that could trigger
+We initially tried to write test cases for these callsites but found ourselves unable to write test cases that could trigger
 the newly added unchecked exception. In most of these cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
 Hence, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code.
