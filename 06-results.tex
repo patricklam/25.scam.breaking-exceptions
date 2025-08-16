@@ -42,12 +42,6 @@ exceptions were not the ones passed by the client to the library method.
 
 As with the \texttt{protobuf} case in Section~\ref{sec:methodology}, which added a new-but-untriggerable unchecked exception, taint analysis played a crucial role in reducing the number of false positives.
 
-\vspace{1em}
-\begin{tcolorbox}[colback=gray!10, colframe=black]
-By adding taint analysis, we reduced the number of potentially affected callsites from 15678 to just 1708.
-\end{tcolorbox}
-\vspace{1em}
-
 To assess the real-world consequences of these remaining 1708 callsites, we manually constructed test cases. For 3 of the sites, we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
 
 In other cases, the exception was not triggered immediately because the client passed hardcoded values or had safeguards like null checks.
