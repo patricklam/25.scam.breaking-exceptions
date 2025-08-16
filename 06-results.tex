@@ -34,21 +34,22 @@ Exceptions passing taint analysis & 1708 \\
 
 Our evaluation includes 1011 client applications, which depend on 302 distinct libraries. Across these, we formed 352 client-library pairs in which the library had an available upgrade, each corresponding to a combination of a specific client and one of the libraries that it depends on. Table~\ref{tab:version-changes} presents the top 15 client-library pairs, ordered in descending number of callsites that pass the taint analysis reachability filter; for each pair, it also presents the number of client callsites invoking library methods with newly-added exceptions.
 
-UnCheckGuard detected 15678 callsites across these 352 pairs where the upgraded version of the library could throw a new unchecked exception. However, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code. We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 1708 callsites in total—spanning 120 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
-
-We initially tried to write test cases for those 1708 cases but were often unable to write a test case that could trigger
-the newly added unchecked exception. In most of the cases, we observed that the parameters responsible for triggering the 
+UnCheckGuard detected 15678 callsites across these 352 pairs where the upgraded version of the library could throw a new unchecked exception.
+We initially tried to write test cases for these callsites but found ourself all-too-often unable to write a test case that could trigger
+the newly added unchecked exception. In most of these cases, we observed that the parameters responsible for triggering the 
 exceptions were not the ones passed by the client to the library method.
+Hence, it was not possible to trigger all of these exceptions using the client's methods, even with a free choice of parameters to pass to the client code.
 
+We therefore applied a taint-based reachability analysis to filter out cases that definitely could not result in actual runtime failures. After this filtering step, we identified 1708 callsites in total—spanning 120 distinct libraries—that appeared to potentially be affected by a newly added unchecked exception.
 As with the \texttt{protobuf} case in Section~\ref{sec:methodology}, which added a new-but-untriggerable unchecked exception, taint analysis played a crucial role in reducing the number of false positives.
 
-To assess the real-world consequences of these remaining 1708 callsites, we manually constructed test cases. For 3 of the sites, we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
+To assess the real-world consequences of these remaining 1708 callsites, we manually constructed test cases. For 3 of the clients (out of 21 attempts), we were able to provide inputs that trigger the newly added exceptions, confirming that they represent real behavioural breaking changes.
 
-In other cases, the exception was not triggered immediately because the client passed hardcoded values or had safeguards like null checks.
+In other cases, the exception was still untriggerable because the client passed hardcoded values or had safeguards like null checks. In these cases, it is possible that modifying the client might trigger the exception, but we considered that out of scope: we wanted it to be possible for client code, as written, to trigger the exception.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Yes, client applications do call methods with newly added unchecked exceptions. Out of 352 client-library pairs in our corpus, we identified 1708 callsites that reached newly-added exceptions, distributed across 136 of our 1011 clients. We were able to construct test cases that trigger the exception in some cases.
+\textbf{Answer RQ1:} Yes, client applications do call methods with newly added unchecked exceptions. Out of 352 client-library pairs in our corpus, we identified 1708 callsites that reached newly-added exceptions, distributed across 136 of our 1011 clients. We were able to construct test cases that trigger the exception in 3 cases.
 \end{tcolorbox}
 \vspace{1em}
 

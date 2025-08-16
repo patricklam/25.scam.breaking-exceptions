@@ -5,3 +5,6 @@ We introduced UnCheckGuard, a static analysis tool designed to detect such excep
 In our evaluation of 352 library–client pairs from the DUETS dataset, we identified 1708 callsites affected by newly introduced unchecked exceptions. Notably, these issues arose not only in major library updates but also in a patch version update—highlighting the risk that developers may unknowingly introduce runtime failures even during seemingly safe updates.
 
 UnCheckGuard addresses a concerning gap in existing tools by targeting behavioural breaking changes due to unchecked exceptions. By statically analyzing both the library and client, it provides an effective way to catch runtime issues early and improve software robustness.
+
+\vspace*{1em} \noindent
+\textit{Acknowledgements.} We thank the anonymous reviewers as well as Weiyi (Ian) Shang and Derek Rayside for helpful comments, particularly the incitement to increase the size of the evaluation, making the results significantly stronger than in the initial submission.
