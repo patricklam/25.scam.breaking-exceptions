@@ -49,7 +49,7 @@ if (proxy) {
    .setConnectionManager(conMgr)
    .setDefaultCredentialsProvider(credentialsProvider)
    .setDefaultAuthSchemeRegistry(authSchemeRegistry)
-(*@\Highlight{   .setProxy(new HttpHost(host, port))}@*)
+  (*@\:\Highlight{.setProxy(new HttpHost(host, port))\!\!\!\!\!}@*)
    .setDefaultCookieStore(new BasicCookieStore())
    .setDefaultRequestConfig(requestConfig).build();
 } else {
