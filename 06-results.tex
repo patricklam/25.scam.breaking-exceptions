@@ -58,7 +58,7 @@ In other cases, the exception was not triggered immediately because the client p
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ2:} Yes, client applications do call methods with newly added unchecked exceptions. Out of 352 client-library pairs in our corpus, we identified 1708 callsites that reached newly-added exceptions, distributed across 136 of our 1011 clients. We were able to construct test cases that trigger the exception in some cases.
+\textbf{Answer RQ1:} Yes, client applications do call methods with newly added unchecked exceptions. Out of 352 client-library pairs in our corpus, we identified 1708 callsites that reached newly-added exceptions, distributed across 136 of our 1011 clients. We were able to construct test cases that trigger the exception in some cases.
 \end{tcolorbox}
 \vspace{1em}
 
@@ -119,13 +119,13 @@ amazon-kinesis-aggregators-.9.2.9 & commons-logging-1.1.1 & commons-logging-1.3.
 \end{table*}
 
 \subsection{Newly-added Unchecked Exceptions in Java Libraries}
-Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version changes $y$ may include new features, while patch changes $z$ fix bugs.
+Semantic versioning~\cite{preston-werner23:_seman_version} proposes that version numbers have three parts, $x.y.z$. According to semantic versioning, library developers are to change the major version $x$ when an upgrade is breaking---that is, a client may have to modify their code to use the new versioning. Minor version upgrades (indicated by changes to $y$) may include new features, while patch upgrades (changes to $z$) fix bugs.
 
-Table~\ref{tab:version-distribution} shows the distribution of newly-added exceptions reachable from clients, across upgrade types. Notably, 50 out of these 120 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed 14 cases in a patch version upgrade. This indicates that even smaller upgrades may introduce behavioural breaking changes via unchecked exceptions—something developers may not anticipate.
+Table~\ref{tab:version-distribution} shows the distribution of newly-added exceptions reachable from clients, across upgrade types. Notably, 50 out of these 120 libraries introduced new unchecked exceptions as part of a major version bump. However, we also observed 14 cases in a patch version upgrade. While we are not making any broader claims about how often behavioural breaking changes occur in general, our results indicate that minor and patch upgrades do introduce behavioural breaking changes via unchecked exceptions which may affect clients—something that developers may not anticipate.
 
 \vspace{1em}
 \begin{tcolorbox}[colback=gray!10, colframe=black]
-\textbf{Answer RQ1:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. We found newly added unchecked exceptions in 120 out of 302 distinct libraries (39.7\%). These changes in major version upgrades (50 times), minor version upgrades (57 times), and patch (14 times) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
+\textbf{Answer RQ2:} Java libraries introduce newly added unchecked client-relevant exceptions across versions frequently enough to be relevant to clients. We found newly added unchecked exceptions in 120 out of 302 distinct libraries (39.7\%). These changes in major version upgrades (50 times), minor version upgrades (57 times), and patch (14 times) version upgrades (e.g., \texttt{httpcore-4.4.6}~$\rightarrow$~\texttt{httpcore-4.4.16}).
 \end{tcolorbox}
 \vspace{1em}
 
@@ -133,7 +133,7 @@ Table~\ref{tab:version-distribution} shows the distribution of newly-added excep
 
 Behavioural breaking changes caused by unchecked exceptions during API evolution are particularly dangerous. Such changes do not show up at compile time, and they do not affect method signatures, which means that the existing tools that we are aware of cannot detect them. For instance, both japicmp and Revapi, widely used tools for detecting breaking changes, focus on syntactic differences in method signatures. While they can both flag checked exceptions—since they appear in method declarations—they do not analyze the method implementations, and thus have no way of identifying newly added unchecked exceptions. As a result, developers who rely solely on either japicmp or revapi could remain unaware of serious runtime-breaking issues.
 
-Some tools have tried to tackle the challenge of behavioural breaking changes. CompCheck~\cite{CompCheck}, for example, works by identifying test cases in some clients and reusing them for others with similar API usage. But this approach depends heavily on the presence of thorough test suites. In practice, most clients do not have such comprehensive coverage, especially not for edge cases involving unchecked exceptions.
+Some tools have tried to tackle the challenge of behavioural breaking changes. CompCheck~\cite{CompCheck}, for example, works by identifying test cases in some clients and reusing them for others with similar API usage. But this approach depends heavily on the presence of thorough test suites. Most clients that we have looked at do not have such comprehensive coverage, especially not for edge cases involving unchecked exceptions.
 
 This is where UnCheckGuard steps in. Unlike existing work, it does not rely on existing test cases. Instead, it compares the old and new versions of a library using static analysis to detect newly added unchecked exceptions, and then runs taint analysis to filter out changes that do not affect the client. By avoiding the need for a test suite, it can reveal behavioural breaking changes that other tools overlook.
 
