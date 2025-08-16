@@ -12,11 +12,11 @@ After carrying out the data collection steps in Section~\ref{sec:data-collection
     \label{fig:jsonjava}
 \end{figure*}
 
-We divide the analysis setup into the following steps: collecting the current and latest library versions, and mapping external method invocations to library methods. Figure~\ref{fig:jsonjava} shows an overview of the full pipeline.
+We divide the analysis setup into two steps: 1) collecting the current and latest library versions, and 2) mapping external method invocations to library methods. Figure~\ref{fig:jsonjava} shows an overview of the full pipeline.
 
-As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
+%As described in Section~\ref{sec:data-collection}, we begin by selecting Java-based clients from the DUETS dataset~\cite{durieux21:_duets}. We retain only those clients that are Maven-compatible and successfully compile to a JAR file, ensuring compatibility with our analysis tooling.
 
-After selecting the valid clients and compiling them into JAR files, we collect the current and latest versions of the libraries on which the client depends.
+After selecting clients and compiling them into JAR files, we collect the current and latest versions of the libraries on which the client depends.
 
 \subsubsection{Library Version Resolution}
 
